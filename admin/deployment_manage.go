@@ -818,6 +818,7 @@ func updateKubernetesDeployments(
 			MemoryRequest:    content["KUBE_MEMORY_REQUEST"],
 			MemoryLimit:      content["KUBE_MEMORY_LIMIT"],
 			HasService:       hasService,
+			ServiceName:      content["KUBE_SERVICE_NAME"],
 			ServicePorts:     servicePorts,
 			HasIngress:       hasIngress,
 			IngressHost:      content["KUBE_INGRESS_HOST"],
@@ -861,6 +862,12 @@ func getReplicasFromContent(content map[string]string) int32 {
 	return int32(replicas)
 }
 
+var deployableRoles = map[string]bool{
+	"agent":   true,
+	"service": true,
+	"portal":  true,
+}
+
 func rotateActorApiKeys(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -869,12 +876,17 @@ func rotateActorApiKeys(
 	apiTokens := make(map[int64]string)
 
 	for _, config := range configs {
-		if !config.ActorDeployable || config.ActorRole != "agent" {
+		if !config.ActorDeployable {
+			continue
+		}
+
+		if !deployableRoles[string(config.ActorRole)] {
 			continue
 		}
 
 		newApiToken := GenerateAPIToken()
 
+		// Set expiration to 60 days from now
 		expirationTime := time.Now().Add(60 * 24 * time.Hour)
 		_, err := querier.ApiTokenRotate(ctx, tx, &dbsqlc.ApiTokenRotateParams{
 			ID:          newApiToken,
@@ -884,7 +896,7 @@ func rotateActorApiKeys(
 			Permissions: []string{"read:invocation"}, // TODO: read permissions from actor config
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to rorate API key of actor %s: %v", config.ActorName, err)
+			return nil, fmt.Errorf("failed to rotate API key for actor %s: %v", config.ActorName, err)
 		}
 
 		apiTokens[config.ActorId] = newApiToken

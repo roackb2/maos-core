@@ -30,6 +30,46 @@ func (q *Queries) ApiTokenDelete(ctx context.Context, db DBTX, id string) error 
 	return err
 }
 
+const apiTokenFindByActorID = `-- name: ApiTokenFindByActorID :many
+SELECT t.id, t.permissions, t.expire_at, t.created_by
+FROM api_tokens t
+JOIN actors a ON t.actor_id = a.id
+WHERE t.actor_id = $1
+ORDER BY t.created_at DESC
+`
+
+type ApiTokenFindByActorIDRow struct {
+	ID          string
+	Permissions []string
+	ExpireAt    int64
+	CreatedBy   string
+}
+
+func (q *Queries) ApiTokenFindByActorID(ctx context.Context, db DBTX, actorID int64) ([]*ApiTokenFindByActorIDRow, error) {
+	rows, err := db.Query(ctx, apiTokenFindByActorID, actorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ApiTokenFindByActorIDRow
+	for rows.Next() {
+		var i ApiTokenFindByActorIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Permissions,
+			&i.ExpireAt,
+			&i.CreatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const apiTokenFindByID = `-- name: ApiTokenFindByID :one
 SELECT t.id, a.id as actor_id, a.queue_id, t.permissions, t.expire_at, t.created_by
 FROM api_tokens t

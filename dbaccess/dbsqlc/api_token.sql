@@ -23,6 +23,13 @@ JOIN actors a ON t.actor_id = a.id
 WHERE t.id = @id
 LIMIT 1;
 
+-- name: ApiTokenFindByActorID :many
+SELECT t.id, t.permissions, t.expire_at, t.created_by
+FROM api_tokens t
+JOIN actors a ON t.actor_id = a.id
+WHERE t.actor_id = @actor_id
+ORDER BY t.created_at DESC;
+
 -- name: ApiTokenCount :one
 SELECT COUNT(*) as count
 FROM api_tokens;

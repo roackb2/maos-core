@@ -16,6 +16,7 @@ type Querier interface {
 	ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdateParams) (*Actor, error)
 	ApiTokenCount(ctx context.Context, db DBTX) (int64, error)
 	ApiTokenDelete(ctx context.Context, db DBTX, id string) error
+	ApiTokenFindByActorID(ctx context.Context, db DBTX, actorID int64) ([]*ApiTokenFindByActorIDRow, error)
 	ApiTokenFindByID(ctx context.Context, db DBTX, id string) (*ApiTokenFindByIDRow, error)
 	ApiTokenInsert(ctx context.Context, db DBTX, arg *ApiTokenInsertParams) (*ApiToken, error)
 	ApiTokenListByPage(ctx context.Context, db DBTX, arg *ApiTokenListByPageParams) ([]*ApiTokenListByPageRow, error)

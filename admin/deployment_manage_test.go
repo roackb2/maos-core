@@ -1318,14 +1318,15 @@ func TestPublishDeployment(t *testing.T) {
 	ctx := context.Background()
 	logger := testhelper.Logger(t)
 
-	setupDeploymentTest := func(t *testing.T, status string, withMigrations bool) (*pgxpool.Pool, *dbsqlc.Deployment, *dbsqlc.Actor, *dbsqlc.Actor, *testhelper.MockSuiteStore) {
+	setupDeploymentTest := func(t *testing.T, status string, withMigrations bool) (*pgxpool.Pool, *dbsqlc.Deployment, []*dbsqlc.Actor, *testhelper.MockSuiteStore) {
 		t.Helper()
 		dbPool := testhelper.TestDB(ctx, t)
 		suiteStore := testhelper.NewMockSuiteStore()
 
 		// Create two actors
 		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, withMigrations)
-		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "agent", true, false, true, withMigrations)
+		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "service", true, true, true, withMigrations)
+		actor3 := fixture.InsertActor2(t, ctx, dbPool, "actor3", "portal", true, true, true, withMigrations)
 
 		// Create a existing deployed deployment and a config suite
 		if status != "deployed" {
@@ -1370,6 +1371,19 @@ func TestPublishDeployment(t *testing.T) {
 			"KUBE_REPLICAS":       "3",
 			"KUBE_MEMORY_REQUEST": "256Mi",
 			"KUBE_MEMORY_LIMIT":   "512Mi",
+			"KUBE_SERVICE_PORT":   "6000",
+			"KUBE_SERVICE_NAME":   "actor2-service",
+		}
+		actor3EnvVars := map[string]string{
+			"key":                     "value3",
+			"KUBE_DOCKER_IMAGE":       "actor3-image:latest",
+			"KUBE_REPLICAS":           "2",
+			"KUBE_MEMORY_REQUEST":     "257Mi",
+			"KUBE_MEMORY_LIMIT":       "516Mi",
+			"KUBE_SERVICE_PORT":       "9000",
+			"KUBE_SERVICE_NAME":       "actor3-service",
+			"KUBE_INGRESS_HOST":       "portal.example.com",
+			"KUBE_INGRESS_BODY_LIMIT": "11m",
 		}
 
 		if withMigrations {
@@ -1383,12 +1397,19 @@ func TestPublishDeployment(t *testing.T) {
 			actor2EnvVars["KUBE_MIGRATE_COMMAND"] = "migrate.sh up"
 			actor2EnvVars["KUBE_MIGRATE_MEMORY_REQUEST"] = "268Mi"
 			actor2EnvVars["KUBE_MIGRATE_MEMORY_LIMIT"] = "532Mi"
+			actor3EnvVars["KUBE_MIGRATE_DOCKER_IMAGE"] = "actor3-image:latest"
+			actor3EnvVars["KUBE_MIGRATE_IMAGE_PULL_SECRET"] = "custom-image-pull-secret"
+			actor3EnvVars["KUBE_MIGRATE_COMMAND"] = "migrate.sh up3"
+			actor3EnvVars["KUBE_MIGRATE_MEMORY_REQUEST"] = "268Mi"
+			actor3EnvVars["KUBE_MIGRATE_MEMORY_LIMIT"] = "532Mi"
 		}
 
 		config1 := fixture.InsertConfig2(t, ctx, dbPool, actor1.ID, createdDeployment.ConfigSuiteID, "test-user", actor1EnvVars)
 		config2 := fixture.InsertConfig2(t, ctx, dbPool, actor2.ID, createdDeployment.ConfigSuiteID, "test-user", actor2EnvVars)
+		config3 := fixture.InsertConfig2(t, ctx, dbPool, actor3.ID, createdDeployment.ConfigSuiteID, "test-user", actor3EnvVars)
 		require.NotNil(t, config1)
 		require.NotNil(t, config2)
+		require.NotNil(t, config3)
 
 		deployment := &dbsqlc.Deployment{
 			ID:            createdDeployment.ID,
@@ -1399,12 +1420,13 @@ func TestPublishDeployment(t *testing.T) {
 			CreatedBy:     createdDeployment.CreatedBy,
 			CreatedAt:     createdDeployment.CreatedAt,
 		}
-		return dbPool, deployment, actor1, actor2, suiteStore
+		actors := []*dbsqlc.Actor{actor1, actor2, actor3}
+		return dbPool, deployment, actors, suiteStore
 	}
 
 	t.Run("Successfully publish reviewing deployment", func(t *testing.T) {
 		t.Parallel()
-		dbPool, createdDeployment, _, _, suiteStore := setupDeploymentTest(t, "reviewing", false)
+		dbPool, createdDeployment, actors, suiteStore := setupDeploymentTest(t, "reviewing", false)
 
 		// Publish the deployment
 		publishRequest := api.AdminPublishDeploymentRequestObject{
@@ -1440,7 +1462,7 @@ func TestPublishDeployment(t *testing.T) {
 		// Verify that UpdateDeploymentSet was called
 		require.Len(t, mockController.updatedDeploymentSets, 1)
 		updatedSet := mockController.updatedDeploymentSets[0]
-		require.Len(t, updatedSet, 1) // We expect 1 actor config
+		require.Len(t, updatedSet, 3) // We expect 3 actor configs
 
 		// Verify that the suite was published to the suite store
 		publishedSuites, err := suiteStore.ReadSuites(ctx)
@@ -1469,16 +1491,82 @@ func TestPublishDeployment(t *testing.T) {
 					"KUBE_REPLICAS":       "3",
 					"KUBE_MEMORY_REQUEST": "256Mi",
 					"KUBE_MEMORY_LIMIT":   "512Mi",
+					"KUBE_SERVICE_PORT":   "6000",
+					"KUBE_SERVICE_NAME":   "actor2-service",
+				}, actorConfig.Configs)
+			case "actor3":
+				require.Equal(t, map[string]string{
+					"key":                     "value3",
+					"KUBE_DOCKER_IMAGE":       "actor3-image:latest",
+					"KUBE_REPLICAS":           "2",
+					"KUBE_MEMORY_REQUEST":     "257Mi",
+					"KUBE_MEMORY_LIMIT":       "516Mi",
+					"KUBE_SERVICE_PORT":       "9000",
+					"KUBE_SERVICE_NAME":       "actor3-service",
+					"KUBE_INGRESS_HOST":       "portal.example.com",
+					"KUBE_INGRESS_BODY_LIMIT": "11m",
 				}, actorConfig.Configs)
 			default:
 				t.Fatalf("Unexpected actor name: %s", actorConfig.ActorName)
 			}
 		}
+
+		apiTokens1, err := querier.ApiTokenFindByActorID(ctx, dbPool, actors[0].ID)
+		require.NoError(t, err)
+		apiTokens2, err := querier.ApiTokenFindByActorID(ctx, dbPool, actors[1].ID)
+		require.NoError(t, err)
+		apiTokens3, err := querier.ApiTokenFindByActorID(ctx, dbPool, actors[2].ID)
+		require.NoError(t, err)
+
+		require.EqualValues(t, 1, len(mockController.updatedDeploymentSets))
+		require.EqualValues(t, 3, len(mockController.updatedDeploymentSets[0]))
+		require.EqualValues(t, k8s.DeploymentParams{
+			Name:             "maos-actor1",
+			Image:            "actor1-image:latest",
+			ImagePullSecrets: "custom-image-pull-secret",
+			Replicas:         2,
+			Labels:           map[string]string{"app": "actor1"},
+			LaunchCommand:    []string{"launch.sh", "run"},
+			EnvVars:          map[string]string{"key": "value1"},
+			APIKey:           apiTokens1[0].ID,
+			MemoryRequest:    "256Mi",
+			MemoryLimit:      "512Mi",
+			ServicePorts:     []int32{},
+		}, mockController.updatedDeploymentSets[0][0])
+		require.EqualValues(t, k8s.DeploymentParams{
+			Name:          "maos-actor2",
+			Image:         "actor2-image:latest",
+			Replicas:      3,
+			Labels:        map[string]string{"app": "actor2"},
+			EnvVars:       map[string]string{"key": "value2"},
+			APIKey:        apiTokens2[0].ID,
+			MemoryRequest: "256Mi",
+			MemoryLimit:   "512Mi",
+			HasService:    true,
+			ServicePorts:  []int32{6000},
+			ServiceName:   "actor2-service",
+		}, mockController.updatedDeploymentSets[0][1])
+		require.EqualValues(t, k8s.DeploymentParams{
+			Name:          "maos-actor3",
+			Image:         "actor3-image:latest",
+			Replicas:      2,
+			Labels:        map[string]string{"app": "actor3"},
+			EnvVars:       map[string]string{"key": "value3"},
+			APIKey:        apiTokens3[0].ID,
+			MemoryRequest: "257Mi",
+			MemoryLimit:   "516Mi",
+			HasService:    true,
+			ServicePorts:  []int32{9000},
+			ServiceName:   "actor3-service",
+			HasIngress:    true,
+			IngressHost:   "portal.example.com",
+			BodyLimit:     "11m",
+		}, mockController.updatedDeploymentSets[0][2])
 	})
 
 	t.Run("Successfully publish draft deployment", func(t *testing.T) {
 		t.Parallel()
-		dbPool, createdDeployment, _, _, suiteStore := setupDeploymentTest(t, "draft", false)
+		dbPool, createdDeployment, _, suiteStore := setupDeploymentTest(t, "draft", false)
 
 		// Publish the deployment
 		publishRequest := api.AdminPublishDeploymentRequestObject{
@@ -1516,7 +1604,7 @@ func TestPublishDeployment(t *testing.T) {
 		// Verify that UpdateDeploymentSet was called
 		require.Len(t, mockController.updatedDeploymentSets, 1)
 		updatedSet := mockController.updatedDeploymentSets[0]
-		require.Len(t, updatedSet, 1) // We expect 1 actor config
+		require.Len(t, updatedSet, 3) // We expect 3 actor configs
 
 		// Verify that the suite was published to the suite store
 		publishedSuites, err := suiteStore.ReadSuites(ctx)
@@ -1527,7 +1615,7 @@ func TestPublishDeployment(t *testing.T) {
 
 	t.Run("Successfully publish and update k8s deployment", func(t *testing.T) {
 		t.Parallel()
-		dbPool, createdDeployment, _, _, suiteStore := setupDeploymentTest(t, "reviewing", true)
+		dbPool, createdDeployment, _, suiteStore := setupDeploymentTest(t, "reviewing", true)
 		mockController := &mockK8sController{}
 
 		// Publish the deployment
@@ -1578,7 +1666,7 @@ func TestPublishDeployment(t *testing.T) {
 		// Verify that UpdateDeploymentSet was called
 		require.Len(t, mockController.updatedDeploymentSets, 1)
 		updatedSet := mockController.updatedDeploymentSets[0]
-		require.Len(t, updatedSet, 1) // We expect 1 actor config
+		require.Len(t, updatedSet, 3) // We expect 3 actor configs
 
 		// Verify the content of the updated deployment set
 		deployment := updatedSet[0]
@@ -1593,7 +1681,7 @@ func TestPublishDeployment(t *testing.T) {
 
 	t.Run("Attempt to publish already deployed deployment", func(t *testing.T) {
 		t.Parallel()
-		dbPool, createdDeployment, _, _, suiteStore := setupDeploymentTest(t, "deployed", false)
+		dbPool, createdDeployment, _, suiteStore := setupDeploymentTest(t, "deployed", false)
 
 		// Attempt to publish the already deployed deployment
 		publishRequest := api.AdminPublishDeploymentRequestObject{
@@ -1613,7 +1701,7 @@ func TestPublishDeployment(t *testing.T) {
 
 	t.Run("Database error", func(t *testing.T) {
 		t.Parallel()
-		dbPool, createdDeployment, _, _, suiteStore := setupDeploymentTest(t, "reviewing", false)
+		dbPool, createdDeployment, _, suiteStore := setupDeploymentTest(t, "reviewing", false)
 
 		// Close the database pool to simulate a database error
 		dbPool.Close()
