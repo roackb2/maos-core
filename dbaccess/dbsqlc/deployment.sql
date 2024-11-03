@@ -17,7 +17,16 @@ WHERE (sqlc.narg(reviewer)::text IS NULL OR sqlc.narg(reviewer)::text = ANY(revi
   AND (sqlc.narg(status)::deployment_status IS NULL OR status = sqlc.narg(status)::deployment_status)
   AND (sqlc.narg(name)::text IS NULL OR name ILIKE '%' || sqlc.narg(name)::text || '%')
   AND (sqlc.narg(id)::bigint[] IS NULL OR id = ANY(sqlc.narg(id)::bigint[]))
-ORDER BY status, created_at DESC, id DESC
+ORDER BY
+  CASE WHEN sqlc.narg(sort_by)::text = 'name' AND sqlc.narg(sort_order)::text = 'ASC' THEN name END ASC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'name' AND sqlc.narg(sort_order)::text = 'DESC' THEN name END DESC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'status' AND sqlc.narg(sort_order)::text = 'ASC' THEN status END ASC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'status' AND sqlc.narg(sort_order)::text = 'DESC' THEN status END DESC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'approved_at' AND sqlc.narg(sort_order)::text = 'ASC' THEN approved_at END ASC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'approved_at' AND sqlc.narg(sort_order)::text = 'DESC' THEN approved_at END DESC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'created_at' AND sqlc.narg(sort_order)::text = 'ASC' THEN created_at END ASC,
+  CASE WHEN sqlc.narg(sort_by)::text = 'created_at' AND sqlc.narg(sort_order)::text = 'DESC' THEN created_at END DESC,
+  id DESC
 LIMIT sqlc.arg(page_size)::bigint
 OFFSET sqlc.arg(page_size) * (sqlc.arg(page)::bigint - 1);
 

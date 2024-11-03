@@ -25,6 +25,8 @@ func ListDeployments(ctx context.Context, logger *slog.Logger, ds dbaccess.DataS
 		"reviewer", lo.FromPtrOr(request.Params.Reviewer, "<nil>"),
 		"page", lo.FromPtrOr(request.Params.Page, -999),
 		"page_size", lo.FromPtrOr(request.Params.PageSize, -999),
+		"sort_by", lo.FromPtrOr(request.Params.SortBy, "<nil>"),
+		"sort_order", lo.FromPtrOr(request.Params.SortOrder, "<nil>"),
 	)
 
 	page, _ := lo.Coalesce[*int](request.Params.Page, &defaultPage)
@@ -36,12 +38,14 @@ func ListDeployments(ctx context.Context, logger *slog.Logger, ds dbaccess.DataS
 	}
 
 	res, err := querier.DeploymentListPaginated(ctx, ds, &dbsqlc.DeploymentListPaginatedParams{
-		Page:     int64(*page),
-		PageSize: int64(pageSize),
-		Status:   status,
-		Reviewer: request.Params.Reviewer,
-		Name:     request.Params.Name,
-		ID:       lo.FromPtrOr(request.Params.Id, nil),
+		Page:      int64(*page),
+		PageSize:  int64(pageSize),
+		Status:    status,
+		Reviewer:  request.Params.Reviewer,
+		Name:      request.Params.Name,
+		ID:        lo.FromPtrOr(request.Params.Id, nil),
+		SortBy:    (*string)(request.Params.SortBy),
+		SortOrder: (*string)(request.Params.SortOrder),
 	})
 	if err != nil {
 		logger.Error("Cannot list deployments", "error", err)

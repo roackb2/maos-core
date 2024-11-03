@@ -1360,6 +1360,24 @@ paths:
               type: integer
               format: int64
           description: Filter by list of deployment id
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum:
+              - name
+              - status
+              - approved_at
+              - created_at
+          description: Sort by field
+        - in: query
+          name: sort_order
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+          description: Sort order
       responses:
         '200':
           description: Successful response

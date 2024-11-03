@@ -363,18 +363,29 @@ WHERE ($1::text IS NULL OR $1::text = ANY(reviewers))
   AND ($2::deployment_status IS NULL OR status = $2::deployment_status)
   AND ($3::text IS NULL OR name ILIKE '%' || $3::text || '%')
   AND ($4::bigint[] IS NULL OR id = ANY($4::bigint[]))
-ORDER BY status, created_at DESC, id DESC
-LIMIT $5::bigint
-OFFSET $5 * ($6::bigint - 1)
+ORDER BY
+  CASE WHEN $5::text = 'name' AND $6::text = 'ASC' THEN name END ASC,
+  CASE WHEN $5::text = 'name' AND $6::text = 'DESC' THEN name END DESC,
+  CASE WHEN $5::text = 'status' AND $6::text = 'ASC' THEN status END ASC,
+  CASE WHEN $5::text = 'status' AND $6::text = 'DESC' THEN status END DESC,
+  CASE WHEN $5::text = 'approved_at' AND $6::text = 'ASC' THEN approved_at END ASC,
+  CASE WHEN $5::text = 'approved_at' AND $6::text = 'DESC' THEN approved_at END DESC,
+  CASE WHEN $5::text = 'created_at' AND $6::text = 'ASC' THEN created_at END ASC,
+  CASE WHEN $5::text = 'created_at' AND $6::text = 'DESC' THEN created_at END DESC,
+  id DESC
+LIMIT $7::bigint
+OFFSET $7 * ($8::bigint - 1)
 `
 
 type DeploymentListPaginatedParams struct {
-	Reviewer *string
-	Status   NullDeploymentStatus
-	Name     *string
-	ID       []int64
-	PageSize interface{}
-	Page     int64
+	Reviewer  *string
+	Status    NullDeploymentStatus
+	Name      *string
+	ID        []int64
+	SortBy    *string
+	SortOrder *string
+	PageSize  interface{}
+	Page      int64
 }
 
 type DeploymentListPaginatedRow struct {
@@ -398,6 +409,8 @@ func (q *Queries) DeploymentListPaginated(ctx context.Context, db DBTX, arg *Dep
 		arg.Status,
 		arg.Name,
 		arg.ID,
+		arg.SortBy,
+		arg.SortOrder,
 		arg.PageSize,
 		arg.Page,
 	)

@@ -154,6 +154,20 @@ const (
 	AdminListDeploymentsParamsStatusReviewing AdminListDeploymentsParamsStatus = "reviewing"
 )
 
+// Defines values for AdminListDeploymentsParamsSortBy.
+const (
+	ApprovedAt AdminListDeploymentsParamsSortBy = "approved_at"
+	CreatedAt  AdminListDeploymentsParamsSortBy = "created_at"
+	Name       AdminListDeploymentsParamsSortBy = "name"
+	Status     AdminListDeploymentsParamsSortBy = "status"
+)
+
+// Defines values for AdminListDeploymentsParamsSortOrder.
+const (
+	ASC  AdminListDeploymentsParamsSortOrder = "ASC"
+	DESC AdminListDeploymentsParamsSortOrder = "DESC"
+)
+
 // Defines values for CreateEmbeddingJSONBodyInputType.
 const (
 	Document CreateEmbeddingJSONBodyInputType = "document"
@@ -558,10 +572,22 @@ type AdminListDeploymentsParams struct {
 
 	// Id Filter by list of deployment id
 	Id *[]int64 `form:"id,omitempty" json:"id,omitempty"`
+
+	// SortBy Sort by field
+	SortBy *AdminListDeploymentsParamsSortBy `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+
+	// SortOrder Sort order
+	SortOrder *AdminListDeploymentsParamsSortOrder `form:"sort_order,omitempty" json:"sort_order,omitempty"`
 }
 
 // AdminListDeploymentsParamsStatus defines parameters for AdminListDeployments.
 type AdminListDeploymentsParamsStatus string
+
+// AdminListDeploymentsParamsSortBy defines parameters for AdminListDeployments.
+type AdminListDeploymentsParamsSortBy string
+
+// AdminListDeploymentsParamsSortOrder defines parameters for AdminListDeployments.
+type AdminListDeploymentsParamsSortOrder string
 
 // AdminCreateDeploymentJSONBody defines parameters for AdminCreateDeployment.
 type AdminCreateDeploymentJSONBody struct {
@@ -1505,6 +1531,22 @@ func (siw *ServerInterfaceWrapper) AdminListDeployments(w http.ResponseWriter, r
 	err = runtime.BindQueryParameter("form", true, false, "id", r.URL.Query(), &params.Id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort_by" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort_by", r.URL.Query(), &params.SortBy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort_by", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "sort_order" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort_order", r.URL.Query(), &params.SortOrder)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort_order", Err: err})
 		return
 	}
 
