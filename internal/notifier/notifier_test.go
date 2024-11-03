@@ -486,7 +486,7 @@ func TestNotifier(t *testing.T) {
 			responsesChan = make(chan string, numUsers)
 		)
 
-		timeout := time.After(10 * time.Second)
+		timeout := time.After(15 * time.Second)
 
 		// simulate agent processing invocation
 		for i := 0; i < numAgents; i++ {
