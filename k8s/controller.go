@@ -846,7 +846,7 @@ func (c *K8sController) createIngressStruct(params DeploymentParams) *networking
 									PathType: lo.ToPtr(networking.PathTypePrefix),
 									Backend: networking.IngressBackend{
 										Service: &networking.IngressServiceBackend{
-											Name: params.Name,
+											Name: lo.Ternary(params.ServiceName != "", params.ServiceName, params.Name),
 											Port: networking.ServiceBackendPort{
 												Number: params.ServicePorts[0],
 											},
