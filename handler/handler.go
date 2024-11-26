@@ -134,6 +134,7 @@ func (s *APIHandler) CreateCompletion(ctx context.Context, request api.CreateCom
 		"trace_id", request.Body.TraceId,
 		"ModelId", request.Body.ModelId,
 		"MaxTokens", request.Body.MaxTokens,
+		"ResponseFormat", request.Body.ResponseFormat,
 		"Temperature", request.Body.Temperature,
 		"StopSequences", request.Body.StopSequences,
 		"Messages", request.Body.Messages,

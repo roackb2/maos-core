@@ -77,6 +77,12 @@ paths:
                   minimum: 0.0
                 max_tokens:
                   type: integer
+                response_format:
+                  description: The format of the response.
+                  type: string
+                  enum:
+                    - text
+                    - json_object
               required:
                 - model_id
                 - messages
@@ -86,6 +92,7 @@ paths:
                   model_id: "gpt4o"
                   temperature: 0.7
                   max_tokens: 200
+                  response_format: json_object
                   tools:
                     - name: "add"
                       description: "Add two numbers."

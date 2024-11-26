@@ -168,6 +168,12 @@ const (
 	DESC AdminListDeploymentsParamsSortOrder = "DESC"
 )
 
+// Defines values for CreateCompletionJSONBodyResponseFormat.
+const (
+	JsonObject CreateCompletionJSONBodyResponseFormat = "json_object"
+	Text       CreateCompletionJSONBodyResponseFormat = "text"
+)
+
 // Defines values for CreateEmbeddingJSONBodyInputType.
 const (
 	Document CreateEmbeddingJSONBodyInputType = "document"
@@ -652,6 +658,9 @@ type CreateCompletionJSONBody struct {
 	// ModelId The model id.
 	ModelId string `json:"model_id"`
 
+	// ResponseFormat The format of the response.
+	ResponseFormat *CreateCompletionJSONBodyResponseFormat `json:"response_format,omitempty"`
+
 	// StopSequences Custom text sequences that will cause the model to stop generating.
 	StopSequences *[]string `json:"stop_sequences,omitempty"`
 	Temperature   *float32  `json:"temperature,omitempty"`
@@ -660,6 +669,9 @@ type CreateCompletionJSONBody struct {
 	// TraceId A unique identifier for the request.
 	TraceId string `json:"trace_id"`
 }
+
+// CreateCompletionJSONBodyResponseFormat defines parameters for CreateCompletion.
+type CreateCompletionJSONBodyResponseFormat string
 
 // ListCompletionModelsParams defines parameters for ListCompletionModels.
 type ListCompletionModelsParams struct {

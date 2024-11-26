@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/samber/lo"
 	"gitlab.com/navyx/ai/maos/maos-core/llm"
 	"gitlab.com/navyx/ai/maos/maos-core/llm/adapter"
@@ -23,18 +24,19 @@ func TestAzureOpenAIWithText(t *testing.T) {
 	}
 
 	req := llm.CompletionRequest{
-		ModelID: "5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o",
+		ModelID:        "5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o",
+		ResponseFormat: to.Ptr("json_object"),
 		Messages: []llm.Message{
 			{
 				Role: "system",
 				Content: []llm.Content{
-					{Text: "A chatbot that helps you with your daily tasks."},
+					{Text: `A chatbot that helps you with your daily tasks.`},
 				},
 			},
 			{
 				Role: "user",
 				Content: []llm.Content{
-					{Text: "What time is it?"},
+					{Text: `What date is it? Answer in JSON format.  {"date": "2024-01-01"}`},
 				},
 			},
 		},

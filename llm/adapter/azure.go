@@ -70,6 +70,13 @@ func (a *AzureAdapter) GetCompletion(ctx context.Context, request llm.Completion
 	if len(request.StopSequences) != 0 {
 		body.Stop = request.StopSequences
 	}
+	if request.ResponseFormat != nil {
+		if *request.ResponseFormat == "json_object" {
+			body.ResponseFormat = &azopenai.ChatCompletionsJSONResponseFormat{}
+		} else if *request.ResponseFormat == "text" {
+			body.ResponseFormat = &azopenai.ChatCompletionsTextResponseFormat{}
+		}
+	}
 	for _, msg := range request.Messages {
 		classifications, err := ToChatRequestMessageClassification(msg)
 		if err != nil {

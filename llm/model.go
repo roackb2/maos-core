@@ -54,12 +54,13 @@ type ToolCall struct {
 
 // CompletionRequest represents the request body for the completion endpoint
 type CompletionRequest struct {
-	ModelID       string    `json:"model_id"`
-	Messages      []Message `json:"messages"`
-	Tools         []Tool    `json:"tools"`
-	StopSequences []string  `json:"stop_sequences,omitempty"`
-	Temperature   *float32  `json:"temperature,omitempty"`
-	MaxTokens     *int32    `json:"max_tokens,omitempty"`
+	ModelID        string    `json:"model_id"`
+	Messages       []Message `json:"messages"`
+	Tools          []Tool    `json:"tools"`
+	StopSequences  []string  `json:"stop_sequences,omitempty"`
+	Temperature    *float32  `json:"temperature,omitempty"`
+	MaxTokens      *int32    `json:"max_tokens,omitempty"`
+	ResponseFormat *string   `json:"response_format,omitempty"` // "text" or "json_object"
 }
 
 type CompletionResult struct {
