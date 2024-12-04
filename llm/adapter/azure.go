@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/samber/lo"
 	"gitlab.com/navyx/ai/maos/maos-core/llm"
+	"gitlab.com/navyx/ai/maos/maos-core/util"
 )
 
 type AzureAdapter struct {
@@ -100,6 +101,7 @@ func (a *AzureAdapter) GetCompletion(ctx context.Context, request llm.Completion
 		slog.Error("AzureAdapter Getting completion", "error", err)
 		return llm.CompletionResult{}, err
 	}
+	slog.Debug("AzureAdapter Getting completion", "response", util.ToJsonString(resp))
 	return FromGetChatCompletionsResponse(resp), nil
 }
 
