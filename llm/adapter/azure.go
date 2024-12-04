@@ -218,7 +218,7 @@ func FromGetChatCompletionsResponse(resp azopenai.GetChatCompletionsResponse) ll
 		}
 
 		contents := make([]llm.Content, 0)
-		if choice.Message.Content != nil {
+		if choice.Message.Content != nil && *choice.Message.Content != "" {
 			contents = append(contents, llm.Content{
 				Text: string(*choice.Message.Content),
 			})
