@@ -236,6 +236,7 @@ func (s *APIHandler) CreateCompletion(ctx context.Context, request api.CreateCom
 		}, nil
 	}
 
+	s.logger.Debug("GetCompletion result", "result", util.ToJsonString(result))
 	return api.CreateCompletion200JSONResponse{
 		Messages: lo.Map(result.Messages, func(m llm.Message, _ int) api.Message {
 			return api.Message{
