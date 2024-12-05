@@ -129,26 +129,37 @@ func ToChatRequestMessageClassification(msg llm.Message) ([]azopenai.ChatRequest
 			},
 		}, nil
 	} else if chatRole == azopenai.ChatRoleAssistant {
+		toolCallCount := lo.CountBy(msg.Content, func(content llm.Content) bool {
+			return content.ToolCall != nil
+		})
+
+		if toolCallCount != 0 && toolCallCount != len(msg.Content) {
+			return nil, fmt.Errorf("mixed content")
+		}
+
+		// If all contents are tool calls, return a single assistant message.
+		if toolCallCount == len(msg.Content) {
+			assistantMsg := &azopenai.ChatRequestAssistantMessage{}
+			assistantMsg.ToolCalls = lo.Map(
+				msg.Content,
+				func(content llm.Content, _ int) azopenai.ChatCompletionsToolCallClassification {
+					return &azopenai.ChatCompletionsFunctionToolCall{
+						ID:   to.Ptr(content.ToolCall.ID),
+						Type: to.Ptr("function"),
+						Function: &azopenai.FunctionCall{
+							Name:      to.Ptr(content.ToolCall.FunctionName),
+							Arguments: to.Ptr(content.ToolCall.Arguments),
+						},
+					}
+				},
+			)
+			return []azopenai.ChatRequestMessageClassification{assistantMsg}, nil
+		}
+
 		results := lo.Map(
 			msg.Content,
 			func(content llm.Content, _ int) azopenai.ChatRequestMessageClassification {
-				assistantMsg := &azopenai.ChatRequestAssistantMessage{}
-				if content.ToolCall != nil {
-					assistantMsg.ToolCalls = []azopenai.ChatCompletionsToolCallClassification{
-						&azopenai.ChatCompletionsFunctionToolCall{
-							ID:   to.Ptr(content.ToolCall.ID),
-							Type: to.Ptr("function"),
-							Function: &azopenai.FunctionCall{
-								Name:      to.Ptr(content.ToolCall.FunctionName),
-								Arguments: to.Ptr(content.ToolCall.Arguments),
-							},
-						},
-					}
-				} else {
-					assistantMsg.Content = to.Ptr(content.Text)
-				}
-
-				return assistantMsg
+				return &azopenai.ChatRequestAssistantMessage{Content: to.Ptr(content.Text)}
 			},
 		)
 		return results, nil
