@@ -160,6 +160,7 @@ type Actor struct {
 	Configurable bool
 	Role         ActorRole
 	Migratable   bool
+	Permissions  []string
 }
 
 type ApiToken struct {

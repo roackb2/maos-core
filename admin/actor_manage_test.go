@@ -18,6 +18,12 @@ import (
 
 var querier = dbsqlc.New()
 
+func toAPIPermissions(perms []string) []api.Permission {
+	return lo.Map(perms, func(p string, _ int) api.Permission {
+		return api.Permission(p)
+	})
+}
+
 func TestListActorsWithDB(t *testing.T) {
 	t.Parallel()
 	logger := testhelper.Logger(t)
@@ -31,6 +37,8 @@ func TestListActorsWithDB(t *testing.T) {
 		// Setup actors
 		fixture.InsertActor(t, ctx, dbPool, "actor1")
 		fixture.InsertActor(t, ctx, dbPool, "actor2")
+		_, err := dbPool.Exec(ctx, "UPDATE actors SET permissions = $1 WHERE name = 'actor2'", `{"read:invocation","create:completion"}`)
+		require.NoError(t, err)
 
 		request := api.AdminListActorsRequestObject{}
 
@@ -47,7 +55,8 @@ func TestListActorsWithDB(t *testing.T) {
 		actualNames := lo.Map(jsonResponse.Data, func(a api.Actor, _ int) string { return a.Name })
 		assert.Equal(t, []string{"actor1", "actor2"}, actualNames)
 
-		for _, actor := range jsonResponse.Data {
+		expectedPermissions := [][]api.Permission{{"read:invocation"}, {"read:invocation", "create:completion"}}
+		for i, actor := range jsonResponse.Data {
 			assert.NotEmpty(t, actor.Id)
 			assert.NotEmpty(t, actor.Name)
 			assert.NotZero(t, actor.CreatedAt)
@@ -57,6 +66,7 @@ func TestListActorsWithDB(t *testing.T) {
 			assert.NotNil(t, actor.Deployable)
 			assert.NotNil(t, actor.Configurable)
 			assert.NotNil(t, actor.Renameable) // Add check for renameable
+			require.ElementsMatch(t, actor.Permissions, expectedPermissions[i])
 		}
 	})
 
@@ -175,6 +185,7 @@ func TestCreateActorWithDB(t *testing.T) {
 				Enabled:      lo.ToPtr(true),
 				Deployable:   lo.ToPtr(true),
 				Configurable: lo.ToPtr(true),
+				Permissions:  []string{"create:completion", "read:invocation"},
 			},
 		}
 
@@ -193,6 +204,7 @@ func TestCreateActorWithDB(t *testing.T) {
 		assert.True(t, jsonResponse.Deployable)
 		assert.True(t, jsonResponse.Configurable)
 		assert.True(t, jsonResponse.Renameable)
+		assert.ElementsMatch(t, []api.Permission{"create:completion", "read:invocation"}, jsonResponse.Permissions)
 
 		// Verify the actor was created in the database
 		actor, err := querier.ActorFindById(ctx, dbPool, jsonResponse.Id)
@@ -204,6 +216,7 @@ func TestCreateActorWithDB(t *testing.T) {
 		assert.Equal(t, jsonResponse.Enabled, actor.Enabled)
 		assert.Equal(t, jsonResponse.Deployable, actor.Deployable)
 		assert.Equal(t, jsonResponse.Configurable, actor.Configurable)
+		assert.ElementsMatch(t, jsonResponse.Permissions, toAPIPermissions(actor.Permissions))
 
 		// Verify the queue was created in the database
 		queue, err := querier.QueueFindById(ctx, dbPool, actor.QueueID)
@@ -222,6 +235,7 @@ func TestCreateActorWithDB(t *testing.T) {
 				Role:         api.ActorCreateRole("agent"),
 				Configurable: lo.ToPtr(true),
 				Deployable:   lo.ToPtr(true),
+				Permissions:  []string{"read:invocation"},
 			},
 		}
 
@@ -241,6 +255,7 @@ func TestCreateActorWithDB(t *testing.T) {
 		assert.True(t, jsonResponse.Deployable)
 		assert.False(t, jsonResponse.Migratable)
 		assert.True(t, jsonResponse.Renameable)
+		assert.ElementsMatch(t, []api.Permission{"read:invocation"}, jsonResponse.Permissions)
 
 		// Verify the actor was created in the database
 		actor, err := querier.ActorFindById(ctx, dbPool, jsonResponse.Id)
@@ -253,6 +268,7 @@ func TestCreateActorWithDB(t *testing.T) {
 		assert.Equal(t, jsonResponse.Deployable, actor.Deployable)
 		assert.Equal(t, jsonResponse.Configurable, actor.Configurable)
 		assert.False(t, jsonResponse.Migratable)
+		assert.ElementsMatch(t, jsonResponse.Permissions, toAPIPermissions(actor.Permissions))
 
 		// Verify the queue was created in the database
 		queue, err := querier.QueueFindById(ctx, dbPool, actor.QueueID)
@@ -357,6 +373,7 @@ func TestUpdateActor(t *testing.T) {
 				Enabled:      lo.ToPtr(false),
 				Deployable:   lo.ToPtr(true),
 				Configurable: lo.ToPtr(true),
+				Permissions:  &[]api.Permission{"create:completion"},
 			},
 		}
 
@@ -372,6 +389,17 @@ func TestUpdateActor(t *testing.T) {
 		assert.False(t, jsonResponse.Data.Enabled)
 		assert.True(t, jsonResponse.Data.Deployable)
 		assert.True(t, jsonResponse.Data.Configurable)
+		require.ElementsMatch(t, []api.Permission{"create:completion"}, jsonResponse.Data.Permissions)
+
+		// Verify the actor was updated in the database
+		updatedActor, err := querier.ActorFindById(ctx, dbPool, existingActor.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "UpdatedActor", updatedActor.Name)
+		assert.Equal(t, dbsqlc.ActorRole("portal"), updatedActor.Role)
+		assert.False(t, updatedActor.Enabled)
+		assert.True(t, updatedActor.Deployable)
+		assert.True(t, updatedActor.Configurable)
+		require.ElementsMatch(t, []string{"create:completion"}, updatedActor.Permissions)
 	})
 
 	t.Run("Successful update with partial parameters", func(t *testing.T) {
@@ -400,6 +428,7 @@ func TestUpdateActor(t *testing.T) {
 		assert.Equal(t, "PartiallyUpdatedActor", jsonResponse.Data.Name)
 		assert.Equal(t, api.ActorRole("agent"), jsonResponse.Data.Role)
 		assert.False(t, jsonResponse.Data.Enabled)
+		require.ElementsMatch(t, []api.Permission{"read:invocation"}, jsonResponse.Data.Permissions)
 
 		// Check that other fields remain unchanged
 		assert.Equal(t, existingActor.Deployable, jsonResponse.Data.Deployable)

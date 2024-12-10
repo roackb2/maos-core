@@ -18,9 +18,14 @@ properties:
     type: boolean
   migratable:
     type: boolean
+  permissions:
+    type: array
+    items:
+      type: string
 required:
   - name
   - role
+  - permissions
 example:
   name: "actor-16888"
   role: "user"

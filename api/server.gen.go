@@ -182,16 +182,17 @@ const (
 
 // Actor defines model for Actor.
 type Actor struct {
-	Configurable bool      `json:"configurable"`
-	CreatedAt    int64     `json:"created_at"`
-	Deployable   bool      `json:"deployable"`
-	Enabled      bool      `json:"enabled"`
-	Id           int64     `json:"id"`
-	Migratable   bool      `json:"migratable"`
-	Name         string    `json:"name"`
-	Renameable   bool      `json:"renameable"`
-	Role         ActorRole `json:"role"`
-	TokenCount   int64     `json:"token_count"`
+	Configurable bool         `json:"configurable"`
+	CreatedAt    int64        `json:"created_at"`
+	Deployable   bool         `json:"deployable"`
+	Enabled      bool         `json:"enabled"`
+	Id           int64        `json:"id"`
+	Migratable   bool         `json:"migratable"`
+	Name         string       `json:"name"`
+	Permissions  []Permission `json:"permissions"`
+	Renameable   bool         `json:"renameable"`
+	Role         ActorRole    `json:"role"`
+	TokenCount   int64        `json:"token_count"`
 }
 
 // ActorRole defines model for Actor.Role.
@@ -204,6 +205,7 @@ type ActorCreate struct {
 	Enabled      *bool           `json:"enabled,omitempty"`
 	Migratable   *bool           `json:"migratable,omitempty"`
 	Name         string          `json:"name"`
+	Permissions  []string        `json:"permissions"`
 	Role         ActorCreateRole `json:"role"`
 }
 
@@ -531,6 +533,7 @@ type AdminUpdateActorJSONBody struct {
 	Enabled      *bool                         `json:"enabled,omitempty"`
 	Migratable   *bool                         `json:"migratable,omitempty"`
 	Name         *string                       `json:"name,omitempty"`
+	Permissions  *[]Permission                 `json:"permissions,omitempty"`
 	Role         *AdminUpdateActorJSONBodyRole `json:"role,omitempty"`
 }
 

@@ -73,6 +73,11 @@ patch:
               type: boolean
             migratable:
               type: boolean
+            permissions:
+              type: array
+              items:
+                $ref: "../../schemas/Permission.yaml"
+
   responses:
     "200":
       description: Successful response

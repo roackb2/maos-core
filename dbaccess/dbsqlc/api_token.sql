@@ -55,7 +55,12 @@ INSERT INTO api_tokens(
 DELETE FROM api_tokens WHERE id = @id;
 
 -- name: ApiTokenRotate :one
-WITH new_token AS (
+WITH actor_permissions AS (
+  SELECT permissions
+  FROM actors
+  WHERE actors.id = @actor_id
+),
+new_token AS (
   INSERT INTO api_tokens (
     id,
     actor_id,
@@ -68,7 +73,7 @@ WITH new_token AS (
     @actor_id::bigint,
     @new_expire_at::bigint,
     @created_by::text,
-    @permissions::varchar(255)[],
+    (SELECT permissions FROM actor_permissions),
     EXTRACT(EPOCH FROM NOW())
   )
   RETURNING id

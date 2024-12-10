@@ -897,7 +897,6 @@ func rotateActorApiKeys(
 			ActorId:     config.ActorId,
 			NewExpireAt: int64(expirationTime.Unix()),
 			CreatedBy:   "maos-core",
-			Permissions: []string{"read:invocation"}, // TODO: read permissions from actor config
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to rotate API key for actor %s: %v", config.ActorName, err)

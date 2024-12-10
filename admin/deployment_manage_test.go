@@ -1328,6 +1328,9 @@ func TestPublishDeployment(t *testing.T) {
 		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "service", true, true, true, withMigrations)
 		actor3 := fixture.InsertActor2(t, ctx, dbPool, "actor3", "portal", true, true, true, withMigrations)
 
+		_, err := dbPool.Exec(ctx, "UPDATE actors SET permissions = $1 WHERE id = $2", `{"read:invocation","create:completion"}`, actor2.ID)
+		require.NoError(t, err)
+
 		// Create a existing deployed deployment and a config suite
 		if status != "deployed" {
 			existingDeployment, err := querier.DeploymentInsertWithConfigSuite(ctx, dbPool, &dbsqlc.DeploymentInsertWithConfigSuiteParams{
@@ -1517,6 +1520,10 @@ func TestPublishDeployment(t *testing.T) {
 		require.NoError(t, err)
 		apiTokens3, err := querier.ApiTokenFindByActorID(ctx, dbPool, actors[2].ID)
 		require.NoError(t, err)
+
+		require.ElementsMatch(t, []string{"read:invocation"}, apiTokens1[0].Permissions)
+		require.ElementsMatch(t, []string{"read:invocation", "create:completion"}, apiTokens2[0].Permissions)
+		require.ElementsMatch(t, []string{"read:invocation"}, apiTokens3[0].Permissions)
 
 		require.EqualValues(t, 1, len(mockController.updatedDeploymentSets))
 		require.EqualValues(t, 3, len(mockController.updatedDeploymentSets[0]))
@@ -1890,6 +1897,8 @@ func TestRestartDeployment(t *testing.T) {
 		dbDeployment, err := querier.DeploymentGetById(ctx, dbPool, createdDeploymentId)
 		require.NoError(t, err)
 		require.EqualValues(t, "deployed", dbDeployment.Status)
+
+		// Verify api token is
 
 		// Verify that UpdateDeploymentSet was called
 		require.Len(t, mockController.updatedDeploymentSets, 1)

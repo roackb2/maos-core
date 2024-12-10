@@ -21,7 +21,7 @@ delete_actor AS (
     WHERE actors.id = $1
     AND EXISTS (SELECT 1 FROM check_actor WHERE actor_exists = true)
     AND NOT EXISTS (SELECT 1 FROM check_config WHERE config_exists = true)
-    RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable
+    RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
 )
 SELECT
     CASE
@@ -55,6 +55,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.permissions,
   actors.created_at,
   COALESCE(atc.token_count, 0) AS token_count,
   CASE WHEN atc.token_count IS NULL OR atc.token_count = 0 THEN true ELSE false END AS renameable
@@ -72,6 +73,7 @@ type ActorFindByIdRow struct {
 	Deployable   bool
 	Configurable bool
 	Migratable   bool
+	Permissions  []string
 	CreatedAt    int64
 	TokenCount   int64
 	Renameable   bool
@@ -89,6 +91,7 @@ func (q *Queries) ActorFindById(ctx context.Context, db DBTX, id int64) (*ActorF
 		&i.Deployable,
 		&i.Configurable,
 		&i.Migratable,
+		&i.Permissions,
 		&i.CreatedAt,
 		&i.TokenCount,
 		&i.Renameable,
@@ -105,7 +108,8 @@ INSERT INTO actors(
     deployable,
     configurable,
     migratable,
-    metadata
+    metadata,
+    permissions
 ) VALUES (
     $1::text,
     $2::bigint,
@@ -114,8 +118,9 @@ INSERT INTO actors(
     $5::boolean,
     $6::boolean,
     $7::boolean,
-    coalesce($8::jsonb, '{}')
-) RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable
+    coalesce($8::jsonb, '{}'),
+    $9::varchar(255)[]
+) RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
 `
 
 type ActorInsertParams struct {
@@ -127,6 +132,7 @@ type ActorInsertParams struct {
 	Configurable bool
 	Migratable   bool
 	Metadata     []byte
+	Permissions  []string
 }
 
 func (q *Queries) ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertParams) (*Actor, error) {
@@ -139,6 +145,7 @@ func (q *Queries) ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertPara
 		arg.Configurable,
 		arg.Migratable,
 		arg.Metadata,
+		arg.Permissions,
 	)
 	var i Actor
 	err := row.Scan(
@@ -153,6 +160,7 @@ func (q *Queries) ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertPara
 		&i.Configurable,
 		&i.Role,
 		&i.Migratable,
+		&i.Permissions,
 	)
 	return &i, err
 }
@@ -172,6 +180,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.permissions,
   actors.created_at,
   COUNT(*) OVER() AS total_count,
   COALESCE(atc.token_count, 0) AS token_count,
@@ -197,6 +206,7 @@ type ActorListPagenatedRow struct {
 	Deployable   bool
 	Configurable bool
 	Migratable   bool
+	Permissions  []string
 	CreatedAt    int64
 	TotalCount   int64
 	TokenCount   int64
@@ -221,6 +231,7 @@ func (q *Queries) ActorListPagenated(ctx context.Context, db DBTX, arg *ActorLis
 			&i.Deployable,
 			&i.Configurable,
 			&i.Migratable,
+			&i.Permissions,
 			&i.CreatedAt,
 			&i.TotalCount,
 			&i.TokenCount,
@@ -244,9 +255,10 @@ UPDATE actors SET
     deployable = COALESCE($4::boolean, deployable),
     configurable = COALESCE($5::boolean, configurable),
     migratable = COALESCE($6::boolean, migratable),
-    metadata = COALESCE($7::jsonb, metadata)
-WHERE id = $8
-RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable
+    metadata = COALESCE($7::jsonb, metadata),
+    permissions = COALESCE($8, permissions)
+WHERE id = $9
+RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
 `
 
 type ActorUpdateParams struct {
@@ -257,6 +269,7 @@ type ActorUpdateParams struct {
 	Configurable *bool
 	Migratable   *bool
 	Metadata     []byte
+	Permissions  []string
 	ID           int64
 }
 
@@ -269,6 +282,7 @@ func (q *Queries) ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdatePara
 		arg.Configurable,
 		arg.Migratable,
 		arg.Metadata,
+		arg.Permissions,
 		arg.ID,
 	)
 	var i Actor
@@ -284,6 +298,7 @@ func (q *Queries) ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdatePara
 		&i.Configurable,
 		&i.Role,
 		&i.Migratable,
+		&i.Permissions,
 	)
 	return &i, err
 }

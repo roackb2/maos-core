@@ -13,6 +13,18 @@ import (
 	"gitlab.com/navyx/ai/maos/maos-core/util"
 )
 
+func toAPIPermissions(perms []string) []api.Permission {
+	return lo.Map(perms, func(p string, _ int) api.Permission {
+		return api.Permission(p)
+	})
+}
+
+func toStringPermissions(perms []api.Permission) []string {
+	return lo.Map(perms, func(p api.Permission, _ int) string {
+		return string(p)
+	})
+}
+
 func ListActors(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource, request api.AdminListActorsRequestObject) (api.AdminListActorsResponseObject, error) {
 	logger.Info("ListActors", "request", request)
 
@@ -43,6 +55,7 @@ func ListActors(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource
 				Deployable:   row.Deployable,
 				Configurable: row.Configurable,
 				Migratable:   row.Migratable,
+				Permissions:  toAPIPermissions(row.Permissions),
 			}
 		},
 	)
@@ -92,6 +105,7 @@ func CreateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Deployable:   lo.FromPtrOr(request.Body.Deployable, false),
 		Configurable: lo.FromPtrOr(request.Body.Configurable, false),
 		Migratable:   lo.FromPtrOr(request.Body.Migratable, false),
+		Permissions:  request.Body.Permissions,
 	})
 	if err != nil {
 
@@ -107,6 +121,8 @@ func CreateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Enabled:      actor.Enabled,
 		Deployable:   actor.Deployable,
 		Configurable: actor.Configurable,
+		Migratable:   actor.Migratable,
+		Permissions:  toAPIPermissions(actor.Permissions),
 		TokenCount:   0,
 		CreatedAt:    actor.CreatedAt,
 		Renameable:   true,
@@ -144,12 +160,13 @@ func GetActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource, 
 			Deployable:   actor.Deployable,
 			Configurable: actor.Configurable,
 			Migratable:   actor.Migratable,
+			Permissions:  toAPIPermissions(actor.Permissions),
 		},
 	}, nil
 }
 
 func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource, request api.AdminUpdateActorRequestObject) (api.AdminUpdateActorResponseObject, error) {
-	logger.Info("UpdateActor", "actorId", request.Id, "name", lo.FromPtrOr(request.Body.Name, "<nil>"))
+	logger.Info("UpdateActor", "actorId", request.Id, "name", lo.FromPtrOr(request.Body.Name, "<nil>"), "body", request.Body)
 
 	if lo.FromPtrOr(request.Body.Migratable, false) && (!lo.FromPtrOr(request.Body.Deployable, false) || !lo.FromPtrOr(request.Body.Configurable, false)) {
 		return api.AdminUpdateActor400JSONResponse{
@@ -162,6 +179,11 @@ func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		}, nil
 	}
 
+	permissions := ([]string)(nil)
+	if request.Body.Permissions != nil {
+		permissions = toStringPermissions(*request.Body.Permissions)
+	}
+
 	actor, err := querier.ActorUpdate(ctx, ds, &dbsqlc.ActorUpdateParams{
 		ID:           int64(request.Id),
 		Name:         request.Body.Name,
@@ -170,6 +192,7 @@ func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Deployable:   request.Body.Deployable,
 		Configurable: request.Body.Configurable,
 		Migratable:   request.Body.Migratable,
+		Permissions:  permissions,
 	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -191,6 +214,7 @@ func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 			Deployable:   actor.Deployable,
 			Configurable: actor.Configurable,
 			Migratable:   actor.Migratable,
+			Permissions:  toAPIPermissions(actor.Permissions),
 			CreatedAt:    actor.CreatedAt,
 		},
 	}, nil

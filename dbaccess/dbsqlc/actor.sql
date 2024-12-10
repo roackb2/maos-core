@@ -13,6 +13,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.permissions,
   actors.created_at,
   COUNT(*) OVER() AS total_count,
   COALESCE(atc.token_count, 0) AS token_count,
@@ -39,6 +40,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.permissions,
   actors.created_at,
   COALESCE(atc.token_count, 0) AS token_count,
   CASE WHEN atc.token_count IS NULL OR atc.token_count = 0 THEN true ELSE false END AS renameable
@@ -55,7 +57,8 @@ INSERT INTO actors(
     deployable,
     configurable,
     migratable,
-    metadata
+    metadata,
+    permissions
 ) VALUES (
     @name::text,
     @queue_id::bigint,
@@ -64,7 +67,8 @@ INSERT INTO actors(
     @deployable::boolean,
     @configurable::boolean,
     @migratable::boolean,
-    coalesce(@metadata::jsonb, '{}')
+    coalesce(@metadata::jsonb, '{}'),
+    sqlc.narg('permissions')::varchar(255)[]
 ) RETURNING *;
 
 -- name: ActorUpdate :one
@@ -75,7 +79,8 @@ UPDATE actors SET
     deployable = COALESCE(sqlc.narg('deployable')::boolean, deployable),
     configurable = COALESCE(sqlc.narg('configurable')::boolean, configurable),
     migratable = COALESCE(sqlc.narg('migratable')::boolean, migratable),
-    metadata = COALESCE(sqlc.narg('metadata')::jsonb, metadata)
+    metadata = COALESCE(sqlc.narg('metadata')::jsonb, metadata),
+    permissions = COALESCE(sqlc.narg('permissions'), permissions)
 WHERE id = @id
 RETURNING *;
 

@@ -21,6 +21,7 @@ func InsertActor(t *testing.T, ctx context.Context, ds DataSource, name string) 
 		Deployable:   false,
 		Configurable: true,
 		Migratable:   false,
+		Permissions:  []string{"read:invocation"},
 	})
 	if err != nil {
 		t.Fatalf("Failed to insert actor: %v", err)
@@ -42,6 +43,7 @@ func InsertActor2(t *testing.T, ctx context.Context, ds DataSource, name string,
 		Deployable:   deployable,
 		Configurable: configurable,
 		Migratable:   migratable,
+		Permissions:  []string{"read:invocation"},
 	})
 	if err != nil {
 		t.Fatalf("Failed to insert actor: %v", err)

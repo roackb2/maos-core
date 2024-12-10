@@ -78,7 +78,8 @@ func TestAdminCreateActorEndpoint(t *testing.T) {
 	fixture.InsertToken(t, ctx, ds, "actor-token", actor2.ID, []string{"user"})
 
 	t.Run("Valid admin token", func(t *testing.T) {
-		resp, resBody := PostHttp(t, server.URL+"/v1/admin/actors", `{"name":"new_actor","role":"portal"}`, "admin-token")
+		resp, resBody := PostHttp(t, server.URL+"/v1/admin/actors", `{"name":"new_actor","role":"portal", "permissions":["create:completion"]}`, "admin-token")
+		t.Log("test", resp.Status)
 		require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 		var response api.AdminCreateActor201JSONResponse
@@ -96,6 +97,7 @@ func TestAdminCreateActorEndpoint(t *testing.T) {
 		require.NotNil(t, createdActor)
 		require.Equal(t, "new_actor", createdActor.Name)
 		require.EqualValues(t, "portal", createdActor.Role)
+		require.ElementsMatch(t, []string{"create:completion"}, createdActor.Permissions)
 
 		// Verify the associated queue was created
 		queue, err := querier.QueueFindById(ctx, ds, createdActor.QueueID)

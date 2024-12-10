@@ -1273,6 +1273,10 @@ paths:
                   type: boolean
                 migratable:
                   type: boolean
+                permissions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Permission'
       responses:
         '200':
           description: Successful response
@@ -2391,6 +2395,10 @@ components:
             - other
         enabled:
           type: boolean
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
         deployable:
           type: boolean
         configurable:
@@ -2416,6 +2424,7 @@ components:
         - renameable
         - created_at
         - token_count
+        - permissions
       example:
         id: 16888
         name: actor-16888
@@ -2442,9 +2451,14 @@ components:
           type: boolean
         migratable:
           type: boolean
+        permissions:
+          type: array
+          items:
+            type: string
       required:
         - name
         - role
+        - permissions
       example:
         name: actor-16888
         role: user
