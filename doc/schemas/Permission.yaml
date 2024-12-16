@@ -1,7 +1,8 @@
 type: string
 enum:
-  - config:read
-  - invocation:create
-  - invocation:read
-  - invocation:respond
+  - create:invocation
+  - read:invocation
+  - read:mcp
+  - create:mcp
+  - read:mcp_invocation
   - admin

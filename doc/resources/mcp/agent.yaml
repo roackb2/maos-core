@@ -1,0 +1,54 @@
+get:
+  summary: Initialize a SSE connection to an agent for MCP.
+  operationId: initializeMCPSession
+  tags:
+    - MCP
+  parameters:
+    - in: path
+      name: agent
+      schema:
+        type: string
+      required: true
+  responses:
+    200:
+      description: SSE connection established
+      headers:
+        Content-Type:
+          schema:
+            type: string
+            enum: ['text/event-stream']
+          description: Indicates this is a Server-Sent Events stream. The value is always 'text/event-stream'.
+        Cache-Control:
+          schema:
+            type: string
+            enum: ['no-cache']
+          description: Prevents caching of the event stream. The value is always 'no-cache'.
+        Connection:
+          schema:
+            type: string
+            enum: ['keep-alive']
+          description: Keeps the connection alive. The value is always 'keep-alive'.
+      content:
+        text/event-stream:
+          schema:
+            type: object
+            properties:
+              event:
+                type: string
+                description: The type of event
+              data:
+                type: string  # or number, depending on how you want to handle it
+                description: The event payload
+            description: >-
+              The event stream will start with an 'endpoint' event containing the endpoint URL.
+              Subsequent events will contain messages and other data from the agent.
+              Events are formatted as Server-Sent Events with 'event' and 'data' fields.
+              The client to agent messages are sent to the endpoint URL with the sessionId in the query parameters.
+          examples:
+            endpoint_event:
+              summary: Initial endpoint event
+              value:
+                event: "endpoint"
+                data: "https://maos.core/v1/mcp/message?sessionId=1234567890"
+    401:
+      description: Unauthorized

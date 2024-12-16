@@ -1,0 +1,35 @@
+post:
+  summary: Send a message to the MCP server/agent.
+  tags:
+    - MCP
+  operationId: sendMCPMessage
+  parameters:
+    - in: query
+      name: session_id
+      schema:
+        type: string
+      description: The session ID received from the agent endpoint
+      required: true
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/MCPMessage.yaml"
+        examples:
+          message:
+            value:
+              jsonrpc: "2.0"
+              method: "chat"
+              params:
+                message: "What is the weather like?"
+              id: "1234567890"
+  responses:
+    200:
+      description: The response of the request. If the message is a notification, the server will not respond.
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/MCPResponse.yaml"
+    401:
+      description: Unauthorized

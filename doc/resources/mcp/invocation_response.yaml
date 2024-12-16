@@ -1,0 +1,17 @@
+post:
+  summary: Send a response to a MCP client.
+  tags:
+    - MCP
+  operationId: sendMCPResponse
+  parameters:
+    - in: path
+      name: id
+      description: The ID of the invocation to respond to.
+      schema:
+        type: string
+      required: true
+  responses:
+    "200":
+      description: OK
+    "401":
+      description: Unauthorized

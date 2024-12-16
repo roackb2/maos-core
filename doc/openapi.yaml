@@ -63,6 +63,21 @@ paths:
   /v1/rerank:
     $ref: "./resources/rerank/index.yaml"
 
+  /v1/mcp:
+    $ref: "./resources/mcp/index.yaml"
+
+  /v1/mcp/agents/{agent}:
+    $ref: "./resources/mcp/agent.yaml"
+
+  /v1/mcp/message:
+    $ref: "./resources/mcp/message.yaml"
+
+  /v1/mcp/invocations:
+    $ref: "./resources/mcp/invocation_request.yaml"
+
+  /v1/mcp/invocations/{id}:
+    $ref: "./resources/mcp/invocation_response.yaml"
+
   /v1/admin/api_tokens:
     $ref: "./resources/admin/api_tokens.yaml"
 

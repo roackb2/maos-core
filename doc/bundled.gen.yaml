@@ -983,6 +983,200 @@ paths:
                         index: 2
         '401':
           description: Unauthorized
+  /v1/mcp:
+    get:
+      summary: Get the list of MCP servers.
+      operationId: getMCPServers
+      tags:
+        - MCP
+      parameters:
+        - in: query
+          name: trace_id
+          schema:
+            type: string
+          description: A unique identifier for the request.
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the MCP server.
+                        name:
+                          type: string
+                          description: The name of the MCP server.
+                      required:
+                        - id
+                        - name
+                required:
+                  - data
+              examples:
+                model_list:
+                  value:
+                    - id: 9fadfda1-dcdf-4e4d-a42a-e158e54b4c4b
+                      name: doc-splitter
+                    - id: 550e8400-e29b-41d4-a716-446655440000
+                      name: calculator
+        '401':
+          description: Unauthorized
+  /v1/mcp/agents/{agent}:
+    get:
+      summary: Initialize a SSE connection to an agent for MCP.
+      operationId: initializeMCPSession
+      tags:
+        - MCP
+      parameters:
+        - in: path
+          name: agent
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: SSE connection established
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                enum:
+                  - text/event-stream
+              description: >-
+                Indicates this is a Server-Sent Events stream. The value is
+                always 'text/event-stream'.
+            Cache-Control:
+              schema:
+                type: string
+                enum:
+                  - no-cache
+              description: >-
+                Prevents caching of the event stream. The value is always
+                'no-cache'.
+            Connection:
+              schema:
+                type: string
+                enum:
+                  - keep-alive
+              description: Keeps the connection alive. The value is always 'keep-alive'.
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  event:
+                    type: string
+                    description: The type of event
+                  data:
+                    type: string
+                    description: The event payload
+                description: >-
+                  The event stream will start with an 'endpoint' event
+                  containing the endpoint URL. Subsequent events will contain
+                  messages and other data from the agent. Events are formatted
+                  as Server-Sent Events with 'event' and 'data' fields. The
+                  client to agent messages are sent to the endpoint URL with the
+                  sessionId in the query parameters.
+              examples:
+                endpoint_event:
+                  summary: Initial endpoint event
+                  value:
+                    event: endpoint
+                    data: https://maos.core/v1/mcp/message?sessionId=1234567890
+        '401':
+          description: Unauthorized
+  /v1/mcp/message:
+    post:
+      summary: Send a message to the MCP server/agent.
+      tags:
+        - MCP
+      operationId: sendMCPMessage
+      parameters:
+        - in: query
+          name: session_id
+          schema:
+            type: string
+          description: The session ID received from the agent endpoint
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MCPMessage'
+            examples:
+              message:
+                value:
+                  jsonrpc: '2.0'
+                  method: chat
+                  params:
+                    message: What is the weather like?
+                  id: '1234567890'
+      responses:
+        '200':
+          description: >-
+            The response of the request. If the message is a notification, the
+            server will not respond.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPResponse'
+        '401':
+          description: Unauthorized
+  /v1/mcp/invocations:
+    get:
+      summary: Receive a message which sent by a MCP client.
+      tags:
+        - MCP
+      operationId: readMCPMessage
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the invocation.
+                  data:
+                    $ref: '#/components/schemas/MCPMessage'
+                required:
+                  - id
+                  - data
+        '401':
+          description: Unauthorized
+        '404':
+          description: No message available
+        '500':
+          description: Internal server error
+  /v1/mcp/invocations/{id}:
+    post:
+      summary: Send a response to a MCP client.
+      tags:
+        - MCP
+      operationId: sendMCPResponse
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the invocation to respond to.
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
   /v1/admin/api_tokens:
     get:
       summary: List API tokens
@@ -2306,13 +2500,86 @@ components:
         index:
           type: integer
           description: The index of the document in the original list.
+    MCPMessage:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          enum:
+            - '2.0'
+          description: JSON-RPC version
+        method:
+          type: string
+          description: The method to invoke
+        params:
+          oneOf:
+            - type: object
+            - type: array
+              items: {}
+          description: Parameters for the method
+        id:
+          type: string
+          description: >-
+            Unique identifier for the request. If it's not provided, the message
+            is not a request, it's a notification.
+      required:
+        - jsonrpc
+        - method
+    MCPResponse:
+      type: object
+      oneOf:
+        - type: object
+          properties:
+            jsonrpc:
+              type: string
+              enum:
+                - '2.0'
+            result:
+              type: object
+              description: The result object
+            id:
+              type: string
+              description: ID matching the request
+          required:
+            - jsonrpc
+            - result
+            - id
+        - type: object
+          properties:
+            jsonrpc:
+              type: string
+              enum:
+                - '2.0'
+            error:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  description: >-
+                    The error code. -32768 to -32000 are reserved for
+                    pre-defined errors.
+                message:
+                  type: string
+                data:
+                  type: object
+              required:
+                - code
+                - message
+            id:
+              type: string
+              description: ID matching the request
+          required:
+            - jsonrpc
+            - error
+            - id
     Permission:
       type: string
       enum:
-        - config:read
-        - invocation:create
-        - invocation:read
-        - invocation:respond
+        - create:invocation
+        - read:invocation
+        - read:mcp
+        - create:mcp
+        - read:mcp_invocation
         - admin
     ApiToken:
       type: object

@@ -1,0 +1,22 @@
+type: object
+properties:
+  jsonrpc:
+    type: string
+    enum: ['2.0']
+    description: JSON-RPC version
+  method:
+    type: string
+    description: The method to invoke
+  params:
+    oneOf:
+      - type: object
+      - type: array
+        items: {}  # This allows any type of items in the array
+    description: Parameters for the method
+  id:
+    type: string
+    description: Unique identifier for the request. If it's not provided, the message is not a request, it's a notification.
+required:
+  - jsonrpc
+  - method
+

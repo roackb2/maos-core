@@ -1,0 +1,45 @@
+get:
+  summary: Get the list of MCP servers.
+  operationId: getMCPServers
+  tags:
+    - MCP
+  parameters:
+    - in: query
+      name: trace_id
+      schema:
+        type: string
+      description: A unique identifier for the request.
+      required: true
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The ID of the MCP server.
+                    name:
+                      type: string
+                      description: The name of the MCP server.
+                  required:
+                    - id
+                    - name
+            required:
+              - data
+          examples:
+            model_list:
+              value:
+                - id: 9fadfda1-dcdf-4e4d-a42a-e158e54b4c4b
+                  name: "doc-splitter"
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: "calculator"
+    401:
+      description: Unauthorized

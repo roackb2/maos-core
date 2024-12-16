@@ -1,0 +1,42 @@
+type: object
+oneOf:
+  - type: object
+    properties:
+      jsonrpc:
+        type: string
+        enum: ['2.0']
+      result:
+        type: object
+        description: The result object
+      id:
+        type: string
+        description: ID matching the request
+    required:
+      - jsonrpc
+      - result
+      - id
+  - type: object
+    properties:
+      jsonrpc:
+        type: string
+        enum: ['2.0']
+      error:
+        type: object
+        properties:
+          code:
+            type: integer
+            description: The error code. -32768 to -32000 are reserved for pre-defined errors.
+          message:
+            type: string
+          data:
+            type: object
+        required:
+          - code
+          - message
+      id:
+        type: string
+        description: ID matching the request
+    required:
+      - jsonrpc
+      - error
+      - id

@@ -1,0 +1,27 @@
+get:
+  summary: Receive a message which sent by a MCP client.
+  tags:
+    - MCP
+  operationId: readMCPMessage
+  responses:
+    200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The ID of the invocation.
+              data:
+                $ref: "../../schemas/MCPMessage.yaml"
+            required:
+              - id
+              - data
+    404:
+      description: No message available
+    401:
+      description: Unauthorized
+    500:
+      description: Internal server error
