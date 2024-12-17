@@ -31,8 +31,8 @@ func TestListApiTokensWithDB(t *testing.T) {
 		dbPool := testhelper.TestDB(ctx, t)
 		actor1 := fixture.InsertActor(t, ctx, dbPool, "actor1")
 		actor2 := fixture.InsertActor(t, ctx, dbPool, "actor2")
-		fixture.InsertTokenWithExpireAt(t, ctx, dbPool, "token001", actor1.ID, expireAt, []string{"invocation:read", "invocation:create"})
-		fixture.InsertTokenWithExpireAt(t, ctx, dbPool, "token002", actor2.ID, expireAt, []string{"admin"})
+		fixture.InsertTokenWithExpireAt(t, ctx, dbPool, "token001", actor1.ID, expireAt, []string{string(api.ReadInvocation), string(api.CreateInvocation)})
+		fixture.InsertTokenWithExpireAt(t, ctx, dbPool, "token002", actor2.ID, expireAt, []string{string(api.Admin)})
 
 		request := api.AdminListApiTokensRequestObject{
 			Params: api.AdminListApiTokensParams{
@@ -58,7 +58,7 @@ func TestListApiTokensWithDB(t *testing.T) {
 				ActorId:     actor1.ID,
 				ExpireAt:    expireAt,
 				CreatedBy:   "test",
-				Permissions: []api.Permission{api.InvocationRead, api.InvocationCreate},
+				Permissions: []api.Permission{api.ReadInvocation, api.CreateInvocation},
 			},
 			{
 				Id:          "token002",

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -115,6 +116,21 @@ const (
 	InvocationStateRunning   InvocationState = "running"
 )
 
+// Defines values for MCPMessageJsonrpc.
+const (
+	MCPMessageJsonrpcN20 MCPMessageJsonrpc = "2.0"
+)
+
+// Defines values for MCPResponse0Jsonrpc.
+const (
+	MCPResponse0JsonrpcN20 MCPResponse0Jsonrpc = "2.0"
+)
+
+// Defines values for MCPResponse1Jsonrpc.
+const (
+	N20 MCPResponse1Jsonrpc = "2.0"
+)
+
 // Defines values for MessageRole.
 const (
 	MessageRoleAssistant MessageRole = "assistant"
@@ -126,10 +142,11 @@ const (
 // Defines values for Permission.
 const (
 	Admin             Permission = "admin"
-	ConfigRead        Permission = "config:read"
-	InvocationCreate  Permission = "invocation:create"
-	InvocationRead    Permission = "invocation:read"
-	InvocationRespond Permission = "invocation:respond"
+	CreateInvocation  Permission = "create:invocation"
+	CreateMcp         Permission = "create:mcp"
+	ReadInvocation    Permission = "read:invocation"
+	ReadMcp           Permission = "read:mcp"
+	ReadMcpInvocation Permission = "read:mcp_invocation"
 )
 
 // Defines values for AdminUpdateActorJSONBodyRole.
@@ -390,6 +407,70 @@ type InvocationResult struct {
 // - cancelled: The job was cancelled before completion.
 // - discarded: The job was discarded due to an error or system issue.
 type InvocationState string
+
+// MCPMessage defines model for MCPMessage.
+type MCPMessage struct {
+	// Id Unique identifier for the request. If it's not provided, the message is not a request, it's a notification.
+	Id *string `json:"id,omitempty"`
+
+	// Jsonrpc JSON-RPC version
+	Jsonrpc MCPMessageJsonrpc `json:"jsonrpc"`
+
+	// Method The method to invoke
+	Method string `json:"method"`
+
+	// Params Parameters for the method
+	Params *MCPMessage_Params `json:"params,omitempty"`
+}
+
+// MCPMessageJsonrpc JSON-RPC version
+type MCPMessageJsonrpc string
+
+// MCPMessageParams0 defines model for .
+type MCPMessageParams0 = map[string]interface{}
+
+// MCPMessageParams1 defines model for .
+type MCPMessageParams1 = []interface{}
+
+// MCPMessage_Params Parameters for the method
+type MCPMessage_Params struct {
+	union json.RawMessage
+}
+
+// MCPResponse defines model for MCPResponse.
+type MCPResponse struct {
+	union json.RawMessage
+}
+
+// MCPResponse0 defines model for .
+type MCPResponse0 struct {
+	// Id ID matching the request
+	Id      string              `json:"id"`
+	Jsonrpc MCPResponse0Jsonrpc `json:"jsonrpc"`
+
+	// Result The result object
+	Result map[string]interface{} `json:"result"`
+}
+
+// MCPResponse0Jsonrpc defines model for MCPResponse.0.Jsonrpc.
+type MCPResponse0Jsonrpc string
+
+// MCPResponse1 defines model for .
+type MCPResponse1 struct {
+	Error struct {
+		// Code The error code. -32768 to -32000 are reserved for pre-defined errors.
+		Code    int                     `json:"code"`
+		Data    *map[string]interface{} `json:"data,omitempty"`
+		Message string                  `json:"message"`
+	} `json:"error"`
+
+	// Id ID matching the request
+	Id      string              `json:"id"`
+	Jsonrpc MCPResponse1Jsonrpc `json:"jsonrpc"`
+}
+
+// MCPResponse1Jsonrpc defines model for MCPResponse.1.Jsonrpc.
+type MCPResponse1Jsonrpc string
 
 // Message defines model for Message.
 type Message struct {
@@ -757,6 +838,18 @@ type ReturnInvocationResponseJSONBody struct {
 	Result *map[string]interface{} `json:"result,omitempty"`
 }
 
+// GetMCPServersParams defines parameters for GetMCPServers.
+type GetMCPServersParams struct {
+	// TraceId A unique identifier for the request.
+	TraceId string `form:"trace_id" json:"trace_id"`
+}
+
+// SendMCPMessageParams defines parameters for SendMCPMessage.
+type SendMCPMessageParams struct {
+	// SessionId The session ID received from the agent endpoint
+	SessionId string `form:"session_id" json:"session_id"`
+}
+
 // CreateRerankJSONBody defines parameters for CreateRerank.
 type CreateRerankJSONBody struct {
 	// Documents The list of documents.
@@ -844,6 +937,9 @@ type ReturnInvocationErrorJSONRequestBody ReturnInvocationErrorJSONBody
 // ReturnInvocationResponseJSONRequestBody defines body for ReturnInvocationResponse for application/json ContentType.
 type ReturnInvocationResponseJSONRequestBody ReturnInvocationResponseJSONBody
 
+// SendMCPMessageJSONRequestBody defines body for SendMCPMessage for application/json ContentType.
+type SendMCPMessageJSONRequestBody = MCPMessage
+
 // CreateRerankJSONRequestBody defines body for CreateRerank for application/json ContentType.
 type CreateRerankJSONRequestBody CreateRerankJSONBody
 
@@ -852,6 +948,130 @@ type CreateCollectionJSONRequestBody CreateCollectionJSONBody
 
 // UpsertCollectionJSONRequestBody defines body for UpsertCollection for application/json ContentType.
 type UpsertCollectionJSONRequestBody = UpsertCollectionJSONBody
+
+// AsMCPMessageParams0 returns the union data inside the MCPMessage_Params as a MCPMessageParams0
+func (t MCPMessage_Params) AsMCPMessageParams0() (MCPMessageParams0, error) {
+	var body MCPMessageParams0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMCPMessageParams0 overwrites any union data inside the MCPMessage_Params as the provided MCPMessageParams0
+func (t *MCPMessage_Params) FromMCPMessageParams0(v MCPMessageParams0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMCPMessageParams0 performs a merge with any union data inside the MCPMessage_Params, using the provided MCPMessageParams0
+func (t *MCPMessage_Params) MergeMCPMessageParams0(v MCPMessageParams0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMCPMessageParams1 returns the union data inside the MCPMessage_Params as a MCPMessageParams1
+func (t MCPMessage_Params) AsMCPMessageParams1() (MCPMessageParams1, error) {
+	var body MCPMessageParams1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMCPMessageParams1 overwrites any union data inside the MCPMessage_Params as the provided MCPMessageParams1
+func (t *MCPMessage_Params) FromMCPMessageParams1(v MCPMessageParams1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMCPMessageParams1 performs a merge with any union data inside the MCPMessage_Params, using the provided MCPMessageParams1
+func (t *MCPMessage_Params) MergeMCPMessageParams1(v MCPMessageParams1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t MCPMessage_Params) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *MCPMessage_Params) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsMCPResponse0 returns the union data inside the MCPResponse as a MCPResponse0
+func (t MCPResponse) AsMCPResponse0() (MCPResponse0, error) {
+	var body MCPResponse0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMCPResponse0 overwrites any union data inside the MCPResponse as the provided MCPResponse0
+func (t *MCPResponse) FromMCPResponse0(v MCPResponse0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMCPResponse0 performs a merge with any union data inside the MCPResponse, using the provided MCPResponse0
+func (t *MCPResponse) MergeMCPResponse0(v MCPResponse0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsMCPResponse1 returns the union data inside the MCPResponse as a MCPResponse1
+func (t MCPResponse) AsMCPResponse1() (MCPResponse1, error) {
+	var body MCPResponse1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMCPResponse1 overwrites any union data inside the MCPResponse as the provided MCPResponse1
+func (t *MCPResponse) FromMCPResponse1(v MCPResponse1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMCPResponse1 performs a merge with any union data inside the MCPResponse, using the provided MCPResponse1
+func (t *MCPResponse) MergeMCPResponse1(v MCPResponse1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t MCPResponse) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *MCPResponse) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsMessageContent0 returns the union data inside the MessageContent as a MessageContent0
 func (t MessageContent) AsMessageContent0() (MessageContent0, error) {
@@ -1112,6 +1332,21 @@ type ServerInterface interface {
 	// Return invocation result
 	// (POST /v1/invocations/{invoke_id}/response)
 	ReturnInvocationResponse(w http.ResponseWriter, r *http.Request, invokeId string)
+	// Get the list of MCP servers.
+	// (GET /v1/mcp)
+	GetMCPServers(w http.ResponseWriter, r *http.Request, params GetMCPServersParams)
+	// Initialize a SSE connection to an agent for MCP.
+	// (GET /v1/mcp/agents/{agent})
+	InitializeMCPSession(w http.ResponseWriter, r *http.Request, agent string)
+	// Receive a message which sent by a MCP client.
+	// (GET /v1/mcp/invocations)
+	ReadMCPMessage(w http.ResponseWriter, r *http.Request)
+	// Send a response to a MCP client.
+	// (POST /v1/mcp/invocations/{id})
+	SendMCPResponse(w http.ResponseWriter, r *http.Request, id string)
+	// Send a message to the MCP server/agent.
+	// (POST /v1/mcp/message)
+	SendMCPMessage(w http.ResponseWriter, r *http.Request, params SendMCPMessageParams)
 	// Measure the relevance of a list of documents to a query.
 	// (POST /v1/rerank)
 	CreateRerank(w http.ResponseWriter, r *http.Request)
@@ -2418,6 +2653,178 @@ func (siw *ServerInterfaceWrapper) ReturnInvocationResponse(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// GetMCPServers operation middleware
+func (siw *ServerInterfaceWrapper) GetMCPServers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, TraceScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMCPServersParams
+
+	// ------------- Required query parameter "trace_id" -------------
+
+	if paramValue := r.URL.Query().Get("trace_id"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "trace_id"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "trace_id", r.URL.Query(), &params.TraceId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "trace_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMCPServers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// InitializeMCPSession operation middleware
+func (siw *ServerInterfaceWrapper) InitializeMCPSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "agent" -------------
+	var agent string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agent", mux.Vars(r)["agent"], &agent, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "agent", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, TraceScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InitializeMCPSession(w, r, agent)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReadMCPMessage operation middleware
+func (siw *ServerInterfaceWrapper) ReadMCPMessage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, TraceScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReadMCPMessage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendMCPResponse operation middleware
+func (siw *ServerInterfaceWrapper) SendMCPResponse(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, TraceScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendMCPResponse(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendMCPMessage operation middleware
+func (siw *ServerInterfaceWrapper) SendMCPMessage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, TraceScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SendMCPMessageParams
+
+	// ------------- Required query parameter "session_id" -------------
+
+	if paramValue := r.URL.Query().Get("session_id"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "session_id"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "session_id", r.URL.Query(), &params.SessionId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendMCPMessage(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateRerank operation middleware
 func (siw *ServerInterfaceWrapper) CreateRerank(w http.ResponseWriter, r *http.Request) {
 
@@ -2844,6 +3251,16 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/v1/invocations/{invoke_id}/error", wrapper.ReturnInvocationError).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/v1/invocations/{invoke_id}/response", wrapper.ReturnInvocationResponse).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/v1/mcp", wrapper.GetMCPServers).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/v1/mcp/agents/{agent}", wrapper.InitializeMCPSession).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/v1/mcp/invocations", wrapper.ReadMCPMessage).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/v1/mcp/invocations/{id}", wrapper.SendMCPResponse).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/v1/mcp/message", wrapper.SendMCPMessage).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/v1/rerank", wrapper.CreateRerank).Methods("POST")
 
@@ -4543,6 +4960,179 @@ func (response ReturnInvocationResponse500JSONResponse) VisitReturnInvocationRes
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetMCPServersRequestObject struct {
+	Params GetMCPServersParams
+}
+
+type GetMCPServersResponseObject interface {
+	VisitGetMCPServersResponse(w http.ResponseWriter) error
+}
+
+type GetMCPServers200JSONResponse struct {
+	Data []struct {
+		// Id The ID of the MCP server.
+		Id string `json:"id"`
+
+		// Name The name of the MCP server.
+		Name string `json:"name"`
+	} `json:"data"`
+}
+
+func (response GetMCPServers200JSONResponse) VisitGetMCPServersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMCPServers401Response struct {
+}
+
+func (response GetMCPServers401Response) VisitGetMCPServersResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type InitializeMCPSessionRequestObject struct {
+	Agent string `json:"agent"`
+}
+
+type InitializeMCPSessionResponseObject interface {
+	VisitInitializeMCPSessionResponse(w http.ResponseWriter) error
+}
+
+type InitializeMCPSession200ResponseHeaders struct {
+	CacheControl string
+	Connection   string
+	ContentType  string
+}
+
+type InitializeMCPSession200TexteventStreamResponse struct {
+	Body          io.Reader
+	Headers       InitializeMCPSession200ResponseHeaders
+	ContentLength int64
+}
+
+func (response InitializeMCPSession200TexteventStreamResponse) VisitInitializeMCPSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.Header().Set("Cache-Control", fmt.Sprint(response.Headers.CacheControl))
+	w.Header().Set("Connection", fmt.Sprint(response.Headers.Connection))
+	w.Header().Set("Content-Type", fmt.Sprint(response.Headers.ContentType))
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type InitializeMCPSession401Response struct {
+}
+
+func (response InitializeMCPSession401Response) VisitInitializeMCPSessionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ReadMCPMessageRequestObject struct {
+}
+
+type ReadMCPMessageResponseObject interface {
+	VisitReadMCPMessageResponse(w http.ResponseWriter) error
+}
+
+type ReadMCPMessage200JSONResponse struct {
+	Data MCPMessage `json:"data"`
+
+	// Id The ID of the invocation.
+	Id string `json:"id"`
+}
+
+func (response ReadMCPMessage200JSONResponse) VisitReadMCPMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ReadMCPMessage401Response struct {
+}
+
+func (response ReadMCPMessage401Response) VisitReadMCPMessageResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ReadMCPMessage404Response struct {
+}
+
+func (response ReadMCPMessage404Response) VisitReadMCPMessageResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ReadMCPMessage500Response struct {
+}
+
+func (response ReadMCPMessage500Response) VisitReadMCPMessageResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type SendMCPResponseRequestObject struct {
+	Id string `json:"id"`
+}
+
+type SendMCPResponseResponseObject interface {
+	VisitSendMCPResponseResponse(w http.ResponseWriter) error
+}
+
+type SendMCPResponse200Response struct {
+}
+
+func (response SendMCPResponse200Response) VisitSendMCPResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type SendMCPResponse401Response struct {
+}
+
+func (response SendMCPResponse401Response) VisitSendMCPResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type SendMCPMessageRequestObject struct {
+	Params SendMCPMessageParams
+	Body   *SendMCPMessageJSONRequestBody
+}
+
+type SendMCPMessageResponseObject interface {
+	VisitSendMCPMessageResponse(w http.ResponseWriter) error
+}
+
+type SendMCPMessage200JSONResponse MCPResponse
+
+func (response SendMCPMessage200JSONResponse) VisitSendMCPMessageResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SendMCPMessage401Response struct {
+}
+
+func (response SendMCPMessage401Response) VisitSendMCPMessageResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type CreateRerankRequestObject struct {
 	Body *CreateRerankJSONRequestBody
 }
@@ -4854,6 +5444,21 @@ type StrictServerInterface interface {
 	// Return invocation result
 	// (POST /v1/invocations/{invoke_id}/response)
 	ReturnInvocationResponse(ctx context.Context, request ReturnInvocationResponseRequestObject) (ReturnInvocationResponseResponseObject, error)
+	// Get the list of MCP servers.
+	// (GET /v1/mcp)
+	GetMCPServers(ctx context.Context, request GetMCPServersRequestObject) (GetMCPServersResponseObject, error)
+	// Initialize a SSE connection to an agent for MCP.
+	// (GET /v1/mcp/agents/{agent})
+	InitializeMCPSession(ctx context.Context, request InitializeMCPSessionRequestObject) (InitializeMCPSessionResponseObject, error)
+	// Receive a message which sent by a MCP client.
+	// (GET /v1/mcp/invocations)
+	ReadMCPMessage(ctx context.Context, request ReadMCPMessageRequestObject) (ReadMCPMessageResponseObject, error)
+	// Send a response to a MCP client.
+	// (POST /v1/mcp/invocations/{id})
+	SendMCPResponse(ctx context.Context, request SendMCPResponseRequestObject) (SendMCPResponseResponseObject, error)
+	// Send a message to the MCP server/agent.
+	// (POST /v1/mcp/message)
+	SendMCPMessage(ctx context.Context, request SendMCPMessageRequestObject) (SendMCPMessageResponseObject, error)
 	// Measure the relevance of a list of documents to a query.
 	// (POST /v1/rerank)
 	CreateRerank(ctx context.Context, request CreateRerankRequestObject) (CreateRerankResponseObject, error)
@@ -6005,6 +6610,141 @@ func (sh *strictHandler) ReturnInvocationResponse(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReturnInvocationResponseResponseObject); ok {
 		if err := validResponse.VisitReturnInvocationResponseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMCPServers operation middleware
+func (sh *strictHandler) GetMCPServers(w http.ResponseWriter, r *http.Request, params GetMCPServersParams) {
+	var request GetMCPServersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMCPServers(ctx, request.(GetMCPServersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMCPServers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMCPServersResponseObject); ok {
+		if err := validResponse.VisitGetMCPServersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InitializeMCPSession operation middleware
+func (sh *strictHandler) InitializeMCPSession(w http.ResponseWriter, r *http.Request, agent string) {
+	var request InitializeMCPSessionRequestObject
+
+	request.Agent = agent
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InitializeMCPSession(ctx, request.(InitializeMCPSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InitializeMCPSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InitializeMCPSessionResponseObject); ok {
+		if err := validResponse.VisitInitializeMCPSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReadMCPMessage operation middleware
+func (sh *strictHandler) ReadMCPMessage(w http.ResponseWriter, r *http.Request) {
+	var request ReadMCPMessageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReadMCPMessage(ctx, request.(ReadMCPMessageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReadMCPMessage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReadMCPMessageResponseObject); ok {
+		if err := validResponse.VisitReadMCPMessageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SendMCPResponse operation middleware
+func (sh *strictHandler) SendMCPResponse(w http.ResponseWriter, r *http.Request, id string) {
+	var request SendMCPResponseRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SendMCPResponse(ctx, request.(SendMCPResponseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SendMCPResponse")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SendMCPResponseResponseObject); ok {
+		if err := validResponse.VisitSendMCPResponseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SendMCPMessage operation middleware
+func (sh *strictHandler) SendMCPMessage(w http.ResponseWriter, r *http.Request, params SendMCPMessageParams) {
+	var request SendMCPMessageRequestObject
+
+	request.Params = params
+
+	var body SendMCPMessageJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SendMCPMessage(ctx, request.(SendMCPMessageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SendMCPMessage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SendMCPMessageResponseObject); ok {
+		if err := validResponse.VisitSendMCPMessageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

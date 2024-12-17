@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -321,6 +322,26 @@ func (s *APIHandler) UpsertCollection(ctx context.Context, request api.UpsertCol
 
 func (s *APIHandler) ListVectoreStores(ctx context.Context, request api.ListVectoreStoresRequestObject) (api.ListVectoreStoresResponseObject, error) {
 	panic("not implemented")
+}
+
+func (s *APIHandler) GetMCPServers(ctx context.Context, request api.GetMCPServersRequestObject) (api.GetMCPServersResponseObject, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *APIHandler) InitializeMCPSession(ctx context.Context, request api.InitializeMCPSessionRequestObject) (api.InitializeMCPSessionResponseObject, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *APIHandler) ReadMCPMessage(ctx context.Context, request api.ReadMCPMessageRequestObject) (api.ReadMCPMessageResponseObject, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *APIHandler) SendMCPResponse(ctx context.Context, request api.SendMCPResponseRequestObject) (api.SendMCPResponseResponseObject, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (s *APIHandler) SendMCPMessage(ctx context.Context, request api.SendMCPMessageRequestObject) (api.SendMCPMessageResponseObject, error) {
+	return api.SendMCPMessage200JSONResponse{}, errors.New("not implemented")
 }
 
 func (s *APIHandler) AdminListActors(ctx context.Context, request api.AdminListActorsRequestObject) (api.AdminListActorsResponseObject, error) {
