@@ -12,6 +12,8 @@ properties:
       - other
   enabled:
     type: boolean
+  mcp_enabled:
+    type: boolean
   deployable:
     type: boolean
   configurable:

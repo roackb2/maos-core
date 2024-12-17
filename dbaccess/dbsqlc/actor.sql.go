@@ -21,7 +21,7 @@ delete_actor AS (
     WHERE actors.id = $1
     AND EXISTS (SELECT 1 FROM check_actor WHERE actor_exists = true)
     AND NOT EXISTS (SELECT 1 FROM check_config WHERE config_exists = true)
-    RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
+    RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions, mcp_enabled
 )
 SELECT
     CASE
@@ -55,6 +55,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.mcp_enabled,
   actors.permissions,
   actors.created_at,
   COALESCE(atc.token_count, 0) AS token_count,
@@ -73,6 +74,7 @@ type ActorFindByIdRow struct {
 	Deployable   bool
 	Configurable bool
 	Migratable   bool
+	McpEnabled   bool
 	Permissions  []string
 	CreatedAt    int64
 	TokenCount   int64
@@ -91,6 +93,7 @@ func (q *Queries) ActorFindById(ctx context.Context, db DBTX, id int64) (*ActorF
 		&i.Deployable,
 		&i.Configurable,
 		&i.Migratable,
+		&i.McpEnabled,
 		&i.Permissions,
 		&i.CreatedAt,
 		&i.TokenCount,
@@ -108,6 +111,7 @@ INSERT INTO actors(
     deployable,
     configurable,
     migratable,
+    mcp_enabled,
     metadata,
     permissions
 ) VALUES (
@@ -118,9 +122,10 @@ INSERT INTO actors(
     $5::boolean,
     $6::boolean,
     $7::boolean,
-    coalesce($8::jsonb, '{}'),
-    $9::varchar(255)[]
-) RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
+    $8::boolean,
+    coalesce($9::jsonb, '{}'),
+    $10::varchar(255)[]
+) RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions, mcp_enabled
 `
 
 type ActorInsertParams struct {
@@ -131,6 +136,7 @@ type ActorInsertParams struct {
 	Deployable   bool
 	Configurable bool
 	Migratable   bool
+	McpEnabled   bool
 	Metadata     []byte
 	Permissions  []string
 }
@@ -144,6 +150,7 @@ func (q *Queries) ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertPara
 		arg.Deployable,
 		arg.Configurable,
 		arg.Migratable,
+		arg.McpEnabled,
 		arg.Metadata,
 		arg.Permissions,
 	)
@@ -161,6 +168,7 @@ func (q *Queries) ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertPara
 		&i.Role,
 		&i.Migratable,
 		&i.Permissions,
+		&i.McpEnabled,
 	)
 	return &i, err
 }
@@ -180,6 +188,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.mcp_enabled,
   actors.permissions,
   actors.created_at,
   COUNT(*) OVER() AS total_count,
@@ -206,6 +215,7 @@ type ActorListPagenatedRow struct {
 	Deployable   bool
 	Configurable bool
 	Migratable   bool
+	McpEnabled   bool
 	Permissions  []string
 	CreatedAt    int64
 	TotalCount   int64
@@ -231,6 +241,7 @@ func (q *Queries) ActorListPagenated(ctx context.Context, db DBTX, arg *ActorLis
 			&i.Deployable,
 			&i.Configurable,
 			&i.Migratable,
+			&i.McpEnabled,
 			&i.Permissions,
 			&i.CreatedAt,
 			&i.TotalCount,
@@ -255,10 +266,11 @@ UPDATE actors SET
     deployable = COALESCE($4::boolean, deployable),
     configurable = COALESCE($5::boolean, configurable),
     migratable = COALESCE($6::boolean, migratable),
-    metadata = COALESCE($7::jsonb, metadata),
-    permissions = COALESCE($8, permissions)
-WHERE id = $9
-RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions
+    mcp_enabled = COALESCE($7::boolean, mcp_enabled),
+    metadata = COALESCE($8::jsonb, metadata),
+    permissions = COALESCE($9, permissions)
+WHERE id = $10
+RETURNING id, name, queue_id, created_at, metadata, updated_at, enabled, deployable, configurable, role, migratable, permissions, mcp_enabled
 `
 
 type ActorUpdateParams struct {
@@ -268,6 +280,7 @@ type ActorUpdateParams struct {
 	Deployable   *bool
 	Configurable *bool
 	Migratable   *bool
+	McpEnabled   *bool
 	Metadata     []byte
 	Permissions  []string
 	ID           int64
@@ -281,6 +294,7 @@ func (q *Queries) ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdatePara
 		arg.Deployable,
 		arg.Configurable,
 		arg.Migratable,
+		arg.McpEnabled,
 		arg.Metadata,
 		arg.Permissions,
 		arg.ID,
@@ -299,6 +313,7 @@ func (q *Queries) ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdatePara
 		&i.Role,
 		&i.Migratable,
 		&i.Permissions,
+		&i.McpEnabled,
 	)
 	return &i, err
 }

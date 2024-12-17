@@ -55,6 +55,7 @@ func ListActors(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource
 				Deployable:   row.Deployable,
 				Configurable: row.Configurable,
 				Migratable:   row.Migratable,
+				McpEnabled:   row.McpEnabled,
 				Permissions:  toAPIPermissions(row.Permissions),
 			}
 		},
@@ -105,6 +106,7 @@ func CreateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Deployable:   lo.FromPtrOr(request.Body.Deployable, false),
 		Configurable: lo.FromPtrOr(request.Body.Configurable, false),
 		Migratable:   lo.FromPtrOr(request.Body.Migratable, false),
+		McpEnabled:   lo.FromPtrOr(request.Body.McpEnabled, false),
 		Permissions:  request.Body.Permissions,
 	})
 	if err != nil {
@@ -122,6 +124,7 @@ func CreateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Deployable:   actor.Deployable,
 		Configurable: actor.Configurable,
 		Migratable:   actor.Migratable,
+		McpEnabled:   actor.McpEnabled,
 		Permissions:  toAPIPermissions(actor.Permissions),
 		TokenCount:   0,
 		CreatedAt:    actor.CreatedAt,
@@ -160,6 +163,7 @@ func GetActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSource, 
 			Deployable:   actor.Deployable,
 			Configurable: actor.Configurable,
 			Migratable:   actor.Migratable,
+			McpEnabled:   actor.McpEnabled,
 			Permissions:  toAPIPermissions(actor.Permissions),
 		},
 	}, nil
@@ -192,6 +196,7 @@ func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		Deployable:   request.Body.Deployable,
 		Configurable: request.Body.Configurable,
 		Migratable:   request.Body.Migratable,
+		McpEnabled:   request.Body.McpEnabled,
 		Permissions:  permissions,
 	})
 	if err != nil {
@@ -214,6 +219,7 @@ func UpdateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 			Deployable:   actor.Deployable,
 			Configurable: actor.Configurable,
 			Migratable:   actor.Migratable,
+			McpEnabled:   actor.McpEnabled,
 			Permissions:  toAPIPermissions(actor.Permissions),
 			CreatedAt:    actor.CreatedAt,
 		},

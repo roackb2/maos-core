@@ -204,6 +204,7 @@ type Actor struct {
 	Deployable   bool         `json:"deployable"`
 	Enabled      bool         `json:"enabled"`
 	Id           int64        `json:"id"`
+	McpEnabled   bool         `json:"mcp_enabled"`
 	Migratable   bool         `json:"migratable"`
 	Name         string       `json:"name"`
 	Permissions  []Permission `json:"permissions"`
@@ -220,6 +221,7 @@ type ActorCreate struct {
 	Configurable *bool           `json:"configurable,omitempty"`
 	Deployable   *bool           `json:"deployable,omitempty"`
 	Enabled      *bool           `json:"enabled,omitempty"`
+	McpEnabled   *bool           `json:"mcp_enabled,omitempty"`
 	Migratable   *bool           `json:"migratable,omitempty"`
 	Name         string          `json:"name"`
 	Permissions  []string        `json:"permissions"`
@@ -612,6 +614,7 @@ type AdminUpdateActorJSONBody struct {
 	Configurable *bool                         `json:"configurable,omitempty"`
 	Deployable   *bool                         `json:"deployable,omitempty"`
 	Enabled      *bool                         `json:"enabled,omitempty"`
+	McpEnabled   *bool                         `json:"mcp_enabled,omitempty"`
 	Migratable   *bool                         `json:"migratable,omitempty"`
 	Name         *string                       `json:"name,omitempty"`
 	Permissions  *[]Permission                 `json:"permissions,omitempty"`

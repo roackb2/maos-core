@@ -13,6 +13,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.mcp_enabled,
   actors.permissions,
   actors.created_at,
   COUNT(*) OVER() AS total_count,
@@ -40,6 +41,7 @@ SELECT
   actors.deployable,
   actors.configurable,
   actors.migratable,
+  actors.mcp_enabled,
   actors.permissions,
   actors.created_at,
   COALESCE(atc.token_count, 0) AS token_count,
@@ -57,6 +59,7 @@ INSERT INTO actors(
     deployable,
     configurable,
     migratable,
+    mcp_enabled,
     metadata,
     permissions
 ) VALUES (
@@ -67,6 +70,7 @@ INSERT INTO actors(
     @deployable::boolean,
     @configurable::boolean,
     @migratable::boolean,
+    @mcp_enabled::boolean,
     coalesce(@metadata::jsonb, '{}'),
     sqlc.narg('permissions')::varchar(255)[]
 ) RETURNING *;
@@ -79,6 +83,7 @@ UPDATE actors SET
     deployable = COALESCE(sqlc.narg('deployable')::boolean, deployable),
     configurable = COALESCE(sqlc.narg('configurable')::boolean, configurable),
     migratable = COALESCE(sqlc.narg('migratable')::boolean, migratable),
+    mcp_enabled = COALESCE(sqlc.narg('mcp_enabled')::boolean, mcp_enabled),
     metadata = COALESCE(sqlc.narg('metadata')::jsonb, metadata),
     permissions = COALESCE(sqlc.narg('permissions'), permissions)
 WHERE id = @id

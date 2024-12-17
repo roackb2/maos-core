@@ -359,7 +359,7 @@ func (q *Queries) ConfigUpdateInactiveContentByCreator(ctx context.Context, db D
 }
 
 const getActorByConfigId = `-- name: GetActorByConfigId :one
-SELECT actors.id, actors.name, actors.queue_id, actors.created_at, actors.metadata, actors.updated_at, actors.enabled, actors.deployable, actors.configurable, actors.role, actors.migratable, actors.permissions
+SELECT actors.id, actors.name, actors.queue_id, actors.created_at, actors.metadata, actors.updated_at, actors.enabled, actors.deployable, actors.configurable, actors.role, actors.migratable, actors.permissions, actors.mcp_enabled
 FROM configs
 JOIN actors ON configs.actor_id = actors.id
 WHERE configs.id = $1::bigint
@@ -383,6 +383,7 @@ func (q *Queries) GetActorByConfigId(ctx context.Context, db DBTX, id int64) (*A
 		&i.Role,
 		&i.Migratable,
 		&i.Permissions,
+		&i.McpEnabled,
 	)
 	return &i, err
 }

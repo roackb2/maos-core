@@ -1461,6 +1461,8 @@ paths:
                     - other
                 enabled:
                   type: boolean
+                mcp_enabled:
+                  type: boolean
                 deployable:
                   type: boolean
                 configurable:
@@ -2662,6 +2664,8 @@ components:
             - other
         enabled:
           type: boolean
+        mcp_enabled:
+          type: boolean
         permissions:
           type: array
           items:
@@ -2685,6 +2689,7 @@ components:
         - name
         - role
         - enabled
+        - mcp_enabled
         - deployable
         - configurable
         - migratable
@@ -2711,6 +2716,8 @@ components:
             - user
             - other
         enabled:
+          type: boolean
+        mcp_enabled:
           type: boolean
         deployable:
           type: boolean

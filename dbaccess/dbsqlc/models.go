@@ -161,6 +161,7 @@ type Actor struct {
 	Role         ActorRole
 	Migratable   bool
 	Permissions  []string
+	McpEnabled   bool
 }
 
 type ApiToken struct {
