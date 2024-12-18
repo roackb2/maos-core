@@ -87,30 +87,34 @@ func CreateActor(ctx context.Context, logger *slog.Logger, ds dbaccess.DataSourc
 		}, nil
 	}
 
-	queue, err := querier.QueueInsert(ctx, ds, &dbsqlc.QueueInsertParams{
-		Name:     request.Body.Name,
-		Metadata: []byte(`{"type":"actor"}`),
+	actor, err := dbaccess.WithTxV(ctx, ds, func(ctx context.Context, tx dbaccess.DataSource) (*dbsqlc.Actor, error) {
+		queue, err := querier.QueueInsert(ctx, tx, &dbsqlc.QueueInsertParams{
+			Name:     request.Body.Name,
+			Metadata: []byte(`{"type":"actor"}`),
+		})
+		if err != nil {
+			return nil, err
+		}
+		actor, err := querier.ActorInsert(ctx, tx, &dbsqlc.ActorInsertParams{
+			Name:         request.Body.Name,
+			Role:         dbsqlc.ActorRole(request.Body.Role),
+			QueueID:      queue.ID,
+			Enabled:      lo.FromPtrOr(request.Body.Enabled, true),
+			Deployable:   lo.FromPtrOr(request.Body.Deployable, false),
+			Configurable: lo.FromPtrOr(request.Body.Configurable, false),
+			Migratable:   lo.FromPtrOr(request.Body.Migratable, false),
+			McpEnabled:   lo.FromPtrOr(request.Body.McpEnabled, false),
+			Permissions:  request.Body.Permissions,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return actor, nil
 	})
+
 	if err != nil {
 		logger.Error("Cannot create actors", "error", err)
-		return api.AdminCreateActor500JSONResponse{
-			N500JSONResponse: api.N500JSONResponse{Error: fmt.Sprintf("Cannot create actors: %v", err)},
-		}, nil
-	}
-
-	actor, err := querier.ActorInsert(ctx, ds, &dbsqlc.ActorInsertParams{
-		Name:         request.Body.Name,
-		Role:         dbsqlc.ActorRole(request.Body.Role),
-		QueueID:      queue.ID,
-		Enabled:      lo.FromPtrOr(request.Body.Enabled, true),
-		Deployable:   lo.FromPtrOr(request.Body.Deployable, false),
-		Configurable: lo.FromPtrOr(request.Body.Configurable, false),
-		Migratable:   lo.FromPtrOr(request.Body.Migratable, false),
-		McpEnabled:   lo.FromPtrOr(request.Body.McpEnabled, false),
-		Permissions:  request.Body.Permissions,
-	})
-	if err != nil {
-
 		return api.AdminCreateActor500JSONResponse{
 			N500JSONResponse: api.N500JSONResponse{Error: fmt.Sprintf("Cannot create actors: %v", err)},
 		}, nil
