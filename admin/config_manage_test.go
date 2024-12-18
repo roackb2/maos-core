@@ -214,7 +214,7 @@ func TestUpdateConfig(t *testing.T) {
 		dbPool := testhelper.TestDB(ctx, t)
 
 		user := "testuser"
-		actor := fixture.InsertActor2(t, ctx, dbPool, "TestActor", "agent", true, true, true, false)
+		actor := fixture.InsertActor2(t, ctx, dbPool, "TestActor", "agent", true, true, true, false, false)
 		configSuite := fixture.InsertConfigSuite(t, ctx, dbPool)
 		initialContent := map[string]string{
 			"KUBE_REPLICAS": "1",

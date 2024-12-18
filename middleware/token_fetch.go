@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"gitlab.com/navyx/ai/maos/maos-core/api"
 	"gitlab.com/navyx/ai/maos/maos-core/dbaccess"
 	"gitlab.com/navyx/ai/maos/maos-core/dbaccess/dbsqlc"
 )
@@ -39,7 +40,7 @@ func NewDatabaseApiTokenFetch(dataSource dbaccess.DataSource, bootstrapApiToken 
 					ActorId:     0,
 					QueueId:     0,
 					ExpireAt:    time.Now().Add(1 * time.Minute).Unix(),
-					Permissions: []string{"admin"},
+					Permissions: []api.Permission{api.Admin},
 				}, nil
 			}
 			bootstrapping = count == 0
@@ -52,12 +53,16 @@ func NewDatabaseApiTokenFetch(dataSource dbaccess.DataSource, bootstrapApiToken 
 			}
 			return nil, err
 		}
+		permissions := make([]api.Permission, len(token.Permissions))
+		for i, p := range token.Permissions {
+			permissions[i] = api.Permission(p)
+		}
 		return &Token{
 			Id:          token.ID,
 			ActorId:     token.ActorId,
 			QueueId:     token.QueueID,
 			ExpireAt:    token.ExpireAt,
-			Permissions: token.Permissions,
+			Permissions: permissions,
 		}, nil
 	}
 }

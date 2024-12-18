@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/navyx/ai/maos/maos-core/api"
 )
 
 // MockAuthTokenFetcher is a mock implementation of TokenFetcher
@@ -104,7 +105,7 @@ func TestNewBearerAuthMiddleware(t *testing.T) {
 			ActorId:     123,
 			QueueId:     456,
 			ExpireAt:    time.Now().Add(1 * time.Hour).Unix(),
-			Permissions: []string{"read", "write"},
+			Permissions: []api.Permission{api.ReadInvocation, api.CreateCompletion},
 		}
 
 		mockFetcher.On("FetchToken", mock.Anything, "validtoken").Return(validToken, nil)

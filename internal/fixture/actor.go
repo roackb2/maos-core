@@ -29,7 +29,18 @@ func InsertActor(t *testing.T, ctx context.Context, ds DataSource, name string) 
 	return actor
 }
 
-func InsertActor2(t *testing.T, ctx context.Context, ds DataSource, name string, role string, enabled bool, deployable bool, configurable bool, migratable bool) *dbsqlc.Actor {
+func InsertActor2(
+	t *testing.T,
+	ctx context.Context,
+	ds DataSource,
+	name string,
+	role string,
+	enabled bool,
+	deployable bool,
+	configurable bool,
+	migratable bool,
+	mcpEnabled bool,
+) *dbsqlc.Actor {
 	query := dbsqlc.New()
 	queue, err := query.QueueInsert(ctx, ds, &dbsqlc.QueueInsertParams{Name: name})
 	if err != nil {
@@ -43,6 +54,7 @@ func InsertActor2(t *testing.T, ctx context.Context, ds DataSource, name string,
 		Deployable:   deployable,
 		Configurable: configurable,
 		Migratable:   migratable,
+		McpEnabled:   mcpEnabled,
 		Permissions:  []string{"read:invocation"},
 	})
 	if err != nil {

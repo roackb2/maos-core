@@ -3,6 +3,9 @@ enum:
   - create:invocation
   - read:invocation
   - read:mcp
+  - read:completion
+  - create:completion
   - create:mcp
   - read:mcp_invocation
   - admin
+

@@ -50,6 +50,9 @@ FROM actors
 LEFT JOIN actor_token_count atc ON actors.id = atc.actor_id
 WHERE actors.id = @id;
 
+-- name: ActorFindByMCPEnabled :many
+SELECT id::TEXT, name FROM actors WHERE mcp_enabled = true AND deployable = true AND enabled = true;
+
 -- name: ActorInsert :one
 INSERT INTO actors(
     name,

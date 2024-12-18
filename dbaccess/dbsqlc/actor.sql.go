@@ -102,6 +102,35 @@ func (q *Queries) ActorFindById(ctx context.Context, db DBTX, id int64) (*ActorF
 	return &i, err
 }
 
+const actorFindByMCPEnabled = `-- name: ActorFindByMCPEnabled :many
+SELECT id::TEXT, name FROM actors WHERE mcp_enabled = true AND deployable = true AND enabled = true
+`
+
+type ActorFindByMCPEnabledRow struct {
+	ID   string
+	Name string
+}
+
+func (q *Queries) ActorFindByMCPEnabled(ctx context.Context, db DBTX) ([]*ActorFindByMCPEnabledRow, error) {
+	rows, err := db.Query(ctx, actorFindByMCPEnabled)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*ActorFindByMCPEnabledRow
+	for rows.Next() {
+		var i ActorFindByMCPEnabledRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const actorInsert = `-- name: ActorInsert :one
 INSERT INTO actors(
     name,

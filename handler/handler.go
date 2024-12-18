@@ -17,6 +17,7 @@ import (
 	"gitlab.com/navyx/ai/maos/maos-core/k8s"
 	"gitlab.com/navyx/ai/maos/maos-core/llm"
 	"gitlab.com/navyx/ai/maos/maos-core/llm/adapter"
+	"gitlab.com/navyx/ai/maos/maos-core/mcp"
 	"gitlab.com/navyx/ai/maos/maos-core/util"
 )
 
@@ -325,7 +326,11 @@ func (s *APIHandler) ListVectoreStores(ctx context.Context, request api.ListVect
 }
 
 func (s *APIHandler) GetMCPServers(ctx context.Context, request api.GetMCPServersRequestObject) (api.GetMCPServersResponseObject, error) {
-	return nil, errors.New("not implemented")
+	token := ValidatePermissions(ctx, "GetMCPServers")
+	if token == nil {
+		return api.GetMCPServers401Response{}, nil
+	}
+	return mcp.GetMCPServers(ctx, s.logger, s.dataSource)
 }
 
 func (s *APIHandler) InitializeMCPSession(ctx context.Context, request api.InitializeMCPSessionRequestObject) (api.InitializeMCPSessionResponseObject, error) {

@@ -17,7 +17,7 @@ type Token struct {
 	ActorId     int64
 	QueueId     int64
 	ExpireAt    int64
-	Permissions []string
+	Permissions []api.Permission
 }
 
 // TokenFetcher is a function that retrieves a token from the database.

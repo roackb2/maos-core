@@ -11,6 +11,7 @@ import (
 type Querier interface {
 	ActorDelete(ctx context.Context, db DBTX, id int64) (string, error)
 	ActorFindById(ctx context.Context, db DBTX, id int64) (*ActorFindByIdRow, error)
+	ActorFindByMCPEnabled(ctx context.Context, db DBTX) ([]*ActorFindByMCPEnabledRow, error)
 	ActorInsert(ctx context.Context, db DBTX, arg *ActorInsertParams) (*Actor, error)
 	ActorListPagenated(ctx context.Context, db DBTX, arg *ActorListPagenatedParams) ([]*ActorListPagenatedRow, error)
 	ActorUpdate(ctx context.Context, db DBTX, arg *ActorUpdateParams) (*Actor, error)

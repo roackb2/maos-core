@@ -1023,12 +1023,14 @@ paths:
               examples:
                 model_list:
                   value:
-                    - id: 9fadfda1-dcdf-4e4d-a42a-e158e54b4c4b
+                    - id: '2345'
                       name: doc-splitter
-                    - id: 550e8400-e29b-41d4-a716-446655440000
+                    - id: '6789'
                       name: calculator
         '401':
           description: Unauthorized
+        '500':
+          $ref: '#/components/responses/500'
   /v1/mcp/agents/{agent}:
     get:
       summary: Initialize a SSE connection to an agent for MCP.
@@ -2580,6 +2582,8 @@ components:
         - create:invocation
         - read:invocation
         - read:mcp
+        - read:completion
+        - create:completion
         - create:mcp
         - read:mcp_invocation
         - admin

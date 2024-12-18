@@ -336,8 +336,8 @@ func TestGetDeployment(t *testing.T) {
 		dbPool := testhelper.TestDB(ctx, t)
 
 		// Create two actors
-		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, false)
-		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "agent", true, false, true, false)
+		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, false, false)
+		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "agent", true, false, true, false, false)
 
 		// Create a config suite
 		createResponse, err := admin.CreateDeployment(ctx, logger, dbPool, api.AdminCreateDeploymentRequestObject{
@@ -418,7 +418,7 @@ func TestGetDeployment(t *testing.T) {
 		t.Parallel()
 		dbPool := testhelper.TestDB(ctx, t)
 
-		actor := fixture.InsertActor2(t, ctx, dbPool, "actor-kube", "agent", true, true, true, false)
+		actor := fixture.InsertActor2(t, ctx, dbPool, "actor-kube", "agent", true, true, true, false, false)
 
 		// Create a config suite
 		createResponse, err := admin.CreateDeployment(ctx, logger, dbPool, api.AdminCreateDeploymentRequestObject{
@@ -1324,9 +1324,9 @@ func TestPublishDeployment(t *testing.T) {
 		suiteStore := testhelper.NewMockSuiteStore()
 
 		// Create two actors
-		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, withMigrations)
-		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "service", true, true, true, withMigrations)
-		actor3 := fixture.InsertActor2(t, ctx, dbPool, "actor3", "portal", true, true, true, withMigrations)
+		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, withMigrations, false)
+		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "service", true, true, true, withMigrations, false)
+		actor3 := fixture.InsertActor2(t, ctx, dbPool, "actor3", "portal", true, true, true, withMigrations, false)
 
 		_, err := dbPool.Exec(ctx, "UPDATE actors SET permissions = $1 WHERE id = $2", `{"read:invocation","create:completion"}`, actor2.ID)
 		require.NoError(t, err)
@@ -1843,8 +1843,8 @@ func TestRestartDeployment(t *testing.T) {
 		dbPool := testhelper.TestDB(ctx, t)
 
 		// Create two actors
-		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, false)
-		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "agent", true, false, true, false)
+		actor1 := fixture.InsertActor2(t, ctx, dbPool, "actor1", "agent", true, true, true, false, false)
+		actor2 := fixture.InsertActor2(t, ctx, dbPool, "actor2", "agent", true, false, true, false, false)
 
 		// Create a deployment
 		createdDeployment, err := querier.DeploymentInsertWithConfigSuite(ctx, dbPool, &dbsqlc.DeploymentInsertWithConfigSuiteParams{

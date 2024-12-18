@@ -142,8 +142,10 @@ const (
 // Defines values for Permission.
 const (
 	Admin             Permission = "admin"
+	CreateCompletion  Permission = "create:completion"
 	CreateInvocation  Permission = "create:invocation"
 	CreateMcp         Permission = "create:mcp"
+	ReadCompletion    Permission = "read:completion"
 	ReadInvocation    Permission = "read:invocation"
 	ReadMcp           Permission = "read:mcp"
 	ReadMcpInvocation Permission = "read:mcp_invocation"
@@ -4994,6 +4996,15 @@ type GetMCPServers401Response struct {
 func (response GetMCPServers401Response) VisitGetMCPServersResponse(w http.ResponseWriter) error {
 	w.WriteHeader(401)
 	return nil
+}
+
+type GetMCPServers500JSONResponse struct{ N500JSONResponse }
+
+func (response GetMCPServers500JSONResponse) VisitGetMCPServersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type InitializeMCPSessionRequestObject struct {

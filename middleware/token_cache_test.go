@@ -10,6 +10,7 @@ import (
 	"github.com/dgraph-io/ristretto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gitlab.com/navyx/ai/maos/maos-core/api"
 )
 
 // MockTokenFetcher is a mock implementation of the TokenFetcher function
@@ -93,7 +94,7 @@ func TestApiTokenCache_GetToken(t *testing.T) {
 			ActorId:     1,
 			QueueId:     2,
 			ExpireAt:    time.Now().Unix() + 3600,
-			Permissions: []string{"read", "write"},
+			Permissions: []api.Permission{api.ReadInvocation, api.CreateCompletion},
 		}
 
 		cache.cache.Set(apiToken, expectedToken, 1)
@@ -117,7 +118,7 @@ func TestApiTokenCache_GetToken_Singleflight(t *testing.T) {
 		ActorId:     5,
 		QueueId:     6,
 		ExpireAt:    time.Now().Unix() + 3600,
-		Permissions: []string{"read"},
+		Permissions: []api.Permission{api.ReadInvocation},
 	}
 
 	mockFetcher.On("Fetch", ctx, apiToken).
