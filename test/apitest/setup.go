@@ -130,6 +130,7 @@ func builder(t *testing.T, ctx context.Context, pool *pgxpool.Pool) (*httptest.S
 		AOAIEndpoint:    "--AOAI_ENDPOINT--",
 		AOAIAPIKey:      "--AOAI_API_KEY--",
 		AnthropicAPIKey: "--ANTHROPIC_API_KEY--",
+		OpenAIAPIKey:    "--OPENAI_API_KEY--",
 	})
 	err := apiHandler.Start(ctx)
 	require.NoError(t, err)

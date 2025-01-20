@@ -17,7 +17,8 @@ import (
 )
 
 type AzureAdapter struct {
-	client *azopenai.Client
+	client     *azopenai.Client
+	openAIMode bool
 }
 
 // AzureModelDeploymentMap is a map of model ID to Azure deployment name.
@@ -26,6 +27,7 @@ type AzureAdapter struct {
 var AzureModelDeploymentMap = map[string]string{
 	"5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o": "AOAI_GPT4O_DEPLOYMENT",
 	"bdf5c21b-ad28-4096-9bca-667927b5c742-azure-gpt4":  "AOAI_GPT4_DEPLOYMENT",
+	"4b7b4d5c-7b6a-4d4e-8b0b-4b2b3c4d5e6f-openai-o1":   "o1",
 }
 
 func init() {
@@ -34,6 +36,8 @@ func init() {
 		deployment := os.Getenv(v)
 		if deployment == "" {
 			slog.Error("deployment not found for model", "name", k)
+			newMap[k] = v
+			continue
 		}
 		newMap[k] = deployment
 	}
@@ -41,8 +45,21 @@ func init() {
 	AzureModelDeploymentMap = newMap
 }
 
-func NewAzureAdapter(endpoint, credential string) (*AzureAdapter, error) {
-	client, err := azopenai.NewClientWithKeyCredential(
+func NewAzureAdapter(endpoint, credential string, openAIMode bool) (*AzureAdapter, error) {
+	if !openAIMode {
+		client, err := azopenai.NewClientWithKeyCredential(
+			endpoint,
+			azcore.NewKeyCredential(credential),
+			nil,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return &AzureAdapter{client: client}, nil
+	}
+
+	client, err := azopenai.NewClientForOpenAI(
 		endpoint,
 		azcore.NewKeyCredential(credential),
 		nil,

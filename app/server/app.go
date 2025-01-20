@@ -138,6 +138,7 @@ func (a *App) Run() {
 		AOAIEndpoint:    config.AOAIEndpoint,
 		AOAIAPIKey:      config.AOAIAPIKey,
 		AnthropicAPIKey: config.AnthropicAPIKey,
+		OpenAIAPIKey:    config.OpenAIAPIKey,
 	})
 	err = apiHandler.Start(ctx)
 	if err != nil {

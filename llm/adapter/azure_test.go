@@ -18,6 +18,7 @@ func TestAzureOpenAIWithText(t *testing.T) {
 	client, err := adapter.NewAzureAdapter(
 		os.Getenv("AOAI_ENDPOINT"),
 		os.Getenv("AOAI_API_KEY"),
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -54,6 +55,7 @@ func TestAzureOpenAIWithTool(t *testing.T) {
 	client, err := adapter.NewAzureAdapter(
 		os.Getenv("AOAI_ENDPOINT"),
 		os.Getenv("AOAI_API_KEY"),
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -167,6 +169,7 @@ func TestAzureOpenAIWithMultipleToolsAtOnce(t *testing.T) {
 	client, err := adapter.NewAzureAdapter(
 		os.Getenv("AOAI_ENDPOINT"),
 		os.Getenv("AOAI_API_KEY"),
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -321,6 +324,7 @@ func TestAzureOpenAIWithImage(t *testing.T) {
 	client, err := adapter.NewAzureAdapter(
 		os.Getenv("AOAI_ENDPOINT"),
 		os.Getenv("AOAI_API_KEY"),
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -356,6 +360,7 @@ func TestAzureOpenAIWithImageURL(t *testing.T) {
 	client, err := adapter.NewAzureAdapter(
 		os.Getenv("AOAI_ENDPOINT"),
 		os.Getenv("AOAI_API_KEY"),
+		false,
 	)
 	if err != nil {
 		t.Fatal(err)

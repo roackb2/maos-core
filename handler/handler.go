@@ -29,6 +29,7 @@ type NewAPIHandlerParams struct {
 	AOAIEndpoint    string
 	AOAIAPIKey      string
 	AnthropicAPIKey string
+	OpenAIAPIKey    string
 }
 
 func NewAPIHandler(params NewAPIHandlerParams) *APIHandler {
@@ -42,6 +43,7 @@ func NewAPIHandler(params NewAPIHandlerParams) *APIHandler {
 			AOAIEndpoint:    params.AOAIEndpoint,
 			AOAIAPIKey:      params.AOAIAPIKey,
 			AnthropicAPIKey: params.AnthropicAPIKey,
+			OpenAIAPIKey:    params.OpenAIAPIKey,
 		},
 	}
 }

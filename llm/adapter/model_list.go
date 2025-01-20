@@ -8,6 +8,7 @@ import (
 
 const (
 	PROVIDER_AZURE     = "Azure"
+	PROVIDER_OPENAI    = "OpenAI"
 	PROVIDER_ANTHROPIC = "Anthropic"
 	PROVIDER_VOYAGE    = "VoyageAI"
 )
@@ -22,6 +23,11 @@ var modelList = []llm.Model{
 		ID:       "bdf5c21b-ad28-4096-9bca-667927b5c742-azure-gpt4",
 		Provider: PROVIDER_AZURE,
 		Name:     "Azure gpt-4",
+	},
+	{
+		ID:       "4b7b4d5c-7b6a-4d4e-8b0b-4b2b3c4d5e6f-openai-o1",
+		Provider: PROVIDER_OPENAI,
+		Name:     "OpenAI o1",
 	},
 	{
 		ID:       "3db6db92-a091-4944-9f7e-9d43e70218d3-anthropic-claude-3-opus-20240229",
@@ -57,6 +63,7 @@ type AdapterCredentials struct {
 	AOAIEndpoint    string
 	AOAIAPIKey      string
 	AnthropicAPIKey string
+	OpenAIAPIKey    string
 }
 
 // CreateAdapter creates an adapter for the given model ID
@@ -69,9 +76,11 @@ var CreateAdapter = func(modelId string, credentials AdapterCredentials) (LLMAda
 
 	switch model.Provider {
 	case PROVIDER_AZURE:
-		return NewAzureAdapter(credentials.AOAIEndpoint, credentials.AOAIAPIKey)
+		return NewAzureAdapter(credentials.AOAIEndpoint, credentials.AOAIAPIKey, false)
 	case PROVIDER_ANTHROPIC:
 		return NewAnthropicAdapter(credentials.AnthropicAPIKey), nil
+	case PROVIDER_OPENAI:
+		return NewAzureAdapter("https://api.openai.com/v1", credentials.OpenAIAPIKey, true)
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", model.Provider)
 	}

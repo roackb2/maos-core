@@ -25,4 +25,7 @@ type Config struct {
 
 	// Anthropic
 	AnthropicAPIKey string `envconfig:"ANTHROPIC_API_KEY" validate:"required"`
+
+	// OpenAI
+	OpenAIAPIKey string `envconfig:"OPENAI_API_KEY" validate:"required"`
 }
