@@ -81,9 +81,10 @@ func (a *AzureAdapter) GetCompletion(ctx context.Context, request llm.Completion
 	}
 
 	body := azopenai.ChatCompletionsOptions{
-		DeploymentName: to.Ptr(deploymentName),
-		MaxTokens:      request.MaxTokens,
-		Temperature:    request.Temperature,
+		DeploymentName:      to.Ptr(deploymentName),
+		MaxTokens:           request.MaxTokens,
+		MaxCompletionTokens: request.MaxCompletionTokens,
+		Temperature:         request.Temperature,
 	}
 	if len(request.StopSequences) != 0 {
 		body.Stop = request.StopSequences
@@ -105,7 +106,7 @@ func (a *AzureAdapter) GetCompletion(ctx context.Context, request llm.Completion
 	for _, tool := range request.Tools {
 		body.Tools = append(body.Tools, &azopenai.ChatCompletionsFunctionToolDefinition{
 			Type: to.Ptr("function"),
-			Function: &azopenai.FunctionDefinition{
+			Function: &azopenai.ChatCompletionsFunctionToolDefinitionFunction{
 				Name:        to.Ptr(tool.Name),
 				Description: to.Ptr(tool.Description),
 				Parameters:  tool.Parameters,
@@ -176,7 +177,7 @@ func ToChatRequestMessageClassification(msg llm.Message) ([]azopenai.ChatRequest
 		results := lo.Map(
 			msg.Content,
 			func(content llm.Content, _ int) azopenai.ChatRequestMessageClassification {
-				return &azopenai.ChatRequestAssistantMessage{Content: to.Ptr(content.Text)}
+				return &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content.Text)}
 			},
 		)
 		return results, nil
@@ -185,7 +186,7 @@ func ToChatRequestMessageClassification(msg llm.Message) ([]azopenai.ChatRequest
 			msg.Content,
 			func(content llm.Content, _ int) azopenai.ChatRequestMessageClassification {
 				return &azopenai.ChatRequestSystemMessage{
-					Content: to.Ptr(content.Text),
+					Content: azopenai.NewChatRequestSystemMessageContent(content.Text),
 				}
 			},
 		)
@@ -195,7 +196,7 @@ func ToChatRequestMessageClassification(msg llm.Message) ([]azopenai.ChatRequest
 			msg.Content,
 			func(content llm.Content, _ int) azopenai.ChatRequestMessageClassification {
 				return &azopenai.ChatRequestToolMessage{
-					Content:    to.Ptr(content.ToolResult.Result),
+					Content:    azopenai.NewChatRequestToolMessageContent(content.ToolResult.Result),
 					ToolCallID: to.Ptr(content.ToolResult.ID),
 				}
 			},

@@ -222,12 +222,13 @@ func (s *APIHandler) CreateCompletion(ctx context.Context, request api.CreateCom
 	}
 
 	completionRequest := llm.CompletionRequest{
-		ModelID:        request.Body.ModelId,
-		Messages:       messages,
-		Tools:          tools,
-		Temperature:    request.Body.Temperature,
-		MaxTokens:      lo.ToPtr(int32(lo.FromPtrOr(request.Body.MaxTokens, 8000))),
-		ResponseFormat: (*string)(request.Body.ResponseFormat),
+		ModelID:             request.Body.ModelId,
+		Messages:            messages,
+		Tools:               tools,
+		Temperature:         request.Body.Temperature,
+		MaxTokens:           request.Body.MaxTokens,
+		MaxCompletionTokens: request.Body.MaxCompletionTokens,
+		ResponseFormat:      (*string)(request.Body.ResponseFormat),
 	}
 
 	result, err := adapter.GetCompletion(ctx, completionRequest)

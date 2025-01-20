@@ -33,6 +33,11 @@ post:
               minimum: 0.0
             max_tokens:
               type: integer
+              format: int32
+            max_completion_tokens:
+              type: integer
+              format: int32
+              description: An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and reasoning tokens.
             response_format:
               description: The format of the response.
               type: string

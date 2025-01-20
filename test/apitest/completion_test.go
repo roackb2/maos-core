@@ -60,9 +60,10 @@ func TestCreateCompletion(t *testing.T) {
 					},
 				},
 			},
-			Tools:       []llm.Tool{},
-			Temperature: nil,
-			MaxTokens:   lo.ToPtr(int32(8000)),
+			Tools:               []llm.Tool{},
+			Temperature:         nil,
+			MaxTokens:           lo.ToPtr(int32(8000)),
+			MaxCompletionTokens: lo.ToPtr(int32(16000)),
 		}
 
 		mockResponse := llm.CompletionResult{
@@ -89,6 +90,8 @@ func TestCreateCompletion(t *testing.T) {
 					},
 				},
 			},
+			MaxTokens:           lo.ToPtr(int32(8000)),
+			MaxCompletionTokens: lo.ToPtr(int32(16000)),
 		}
 		requestBody.Messages[0].Content[0].MergeMessageContent0(api.MessageContent0{Text: "Hello, AI!"})
 		requestBody.Messages[0].Content[1].MergeMessageContent1(api.MessageContent1{Image: "SGVsbG8sIEFJIQ=="})
@@ -155,8 +158,9 @@ func TestCreateCompletion(t *testing.T) {
 					Parameters:  []byte(`{"properties":{"nums":{"items":{"type":"number"},"type":"array"}},"type":"object"}`),
 				},
 			},
-			Temperature: nil,
-			MaxTokens:   lo.ToPtr(int32(8000)),
+			Temperature:         nil,
+			MaxTokens:           lo.ToPtr(int32(8000)),
+			MaxCompletionTokens: lo.ToPtr(int32(16000)),
 		}
 
 		mockResponse := llm.CompletionResult{
@@ -210,6 +214,8 @@ func TestCreateCompletion(t *testing.T) {
 					}),
 				},
 			},
+			MaxTokens:           lo.ToPtr(int32(8000)),
+			MaxCompletionTokens: lo.ToPtr(int32(16000)),
 		}
 		requestBody.Messages[0].Content[0].MergeMessageContent0(api.MessageContent0{Text: "Hello, AI!"})
 		requestBody.Messages[1].Content[0].MergeMessageContent4(api.MessageContent4{ToolCall: struct {
