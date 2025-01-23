@@ -30,6 +30,21 @@ var modelList = []llm.Model{
 		Name:     "OpenAI o1",
 	},
 	{
+		ID:       "5c1a5c30-876a-48d4-9378-a2501fc6b92d-openai-o1-mini",
+		Provider: PROVIDER_OPENAI,
+		Name:     "OpenAI o1 mini",
+	},
+	{
+		ID:       "be28aa22-c1c4-49e0-bc05-dddb6b7edb7b-openai-4o",
+		Provider: PROVIDER_OPENAI,
+		Name:     "OpenAI 4o",
+	},
+	{
+		ID:       "7b8ffb04-4a8d-4e4a-b4b1-9ae90613d902-openai-4o-mini",
+		Provider: PROVIDER_OPENAI,
+		Name:     "OpenAI 4o mini",
+	},
+	{
 		ID:       "3db6db92-a091-4944-9f7e-9d43e70218d3-anthropic-claude-3-opus-20240229",
 		Provider: PROVIDER_ANTHROPIC,
 		Name:     "Anthropic Claude 3 Opus 20240229",

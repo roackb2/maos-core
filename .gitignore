@@ -30,3 +30,4 @@ go.work
 coverage.html
 coverage.out
 .mise.toml
+__debug_bin*

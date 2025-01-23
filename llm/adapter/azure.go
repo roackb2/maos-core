@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -17,29 +18,38 @@ import (
 )
 
 type AzureAdapter struct {
-	client     *azopenai.Client
-	openAIMode bool
+	client *azopenai.Client
 }
 
 // AzureModelDeploymentMap is a map of model ID to Azure deployment name.
 // The predefined deployment name should be set in the environment variable.
 // After package initialization, the deployment name will be replaced by the real value.
 var AzureModelDeploymentMap = map[string]string{
-	"5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o": "AOAI_GPT4O_DEPLOYMENT",
-	"bdf5c21b-ad28-4096-9bca-667927b5c742-azure-gpt4":  "AOAI_GPT4_DEPLOYMENT",
-	"4b7b4d5c-7b6a-4d4e-8b0b-4b2b3c4d5e6f-openai-o1":   "o1",
+	"5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o":    "{AOAI_GPT4O_DEPLOYMENT}",
+	"bdf5c21b-ad28-4096-9bca-667927b5c742-azure-gpt4":     "{AOAI_GPT4_DEPLOYMENT}",
+	"4b7b4d5c-7b6a-4d4e-8b0b-4b2b3c4d5e6f-openai-o1":      "o1",
+	"5c1a5c30-876a-48d4-9378-a2501fc6b92d-openai-o1-mini": "o1-mini",
+	"be28aa22-c1c4-49e0-bc05-dddb6b7edb7b-openai-4o":      "gpt-4o",
+	"7b8ffb04-4a8d-4e4a-b4b1-9ae90613d902-openai-4o-mini": "gpt-4o-mini",
 }
 
 func init() {
 	newMap := make(map[string]string)
+	re := regexp.MustCompile(`\{(.+?)\}`)
 	for k, v := range AzureModelDeploymentMap {
-		deployment := os.Getenv(v)
-		if deployment == "" {
-			slog.Error("deployment not found for model", "name", k)
+		matches := re.FindStringSubmatch(v)
+		if len(matches) > 1 {
+			envVarName := matches[1]
+			deployment := os.Getenv(envVarName)
+			if deployment == "" {
+				slog.Error("deployment not found for model", "name", k)
+				newMap[k] = envVarName
+				continue
+			}
+			newMap[k] = deployment
+		} else {
 			newMap[k] = v
-			continue
 		}
-		newMap[k] = deployment
 	}
 
 	AzureModelDeploymentMap = newMap
