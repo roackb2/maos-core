@@ -228,7 +228,19 @@ func (s *APIHandler) CreateCompletion(ctx context.Context, request api.CreateCom
 		Temperature:         request.Body.Temperature,
 		MaxTokens:           request.Body.MaxTokens,
 		MaxCompletionTokens: request.Body.MaxCompletionTokens,
-		ResponseFormat:      (*string)(request.Body.ResponseFormat),
+		// ResponseFormat:      (*string)(request.Body.ResponseFormat),
+	}
+	if request.Body.ResponseFormat != nil {
+		completionRequest.ResponseFormat = &llm.CompletionResponseFormat{
+			Type: string(request.Body.ResponseFormat.Type),
+		}
+		if schema := request.Body.ResponseFormat.JsonSchema; schema != nil {
+			completionRequest.ResponseFormat.JsonSchema = &llm.CompletionJsonSchema{
+				Name:        lo.ToPtr(schema.Name),
+				Description: lo.ToPtr(schema.Description),
+				Schema:      json.RawMessage(util.ToJsonString(schema.Schema)), // TODO: validate schema.Schema,
+			}
+		}
 	}
 
 	result, err := adapter.GetCompletion(ctx, completionRequest)

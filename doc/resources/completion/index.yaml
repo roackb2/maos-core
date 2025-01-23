@@ -40,10 +40,36 @@ post:
               description: An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and reasoning tokens.
             response_format:
               description: The format of the response.
-              type: string
-              enum:
-                - text
-                - json_object
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - text
+                    - json_object
+                    - json_schema
+                json_schema:
+                  type: object
+                  description: The JSON schema when type is json_schema.
+                  properties:
+                    name:
+                      type: string
+                      description: The name of the JSON schema.
+                    description:
+                      type: string
+                      description: The description of the JSON schema.
+                    schema:
+                      type: object
+                      description: The JSON schema.
+                    strict:
+                      type: boolean
+                      description: Turn on/off strict mode.
+                  required:
+                    - name
+                    - description
+                    - schema
+              required:
+                - type
           required:
             - trace_id
             - model_id

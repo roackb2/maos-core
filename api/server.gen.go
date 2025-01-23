@@ -187,10 +187,11 @@ const (
 	DESC AdminListDeploymentsParamsSortOrder = "DESC"
 )
 
-// Defines values for CreateCompletionJSONBodyResponseFormat.
+// Defines values for CreateCompletionJSONBodyResponseFormatType.
 const (
-	JsonObject CreateCompletionJSONBodyResponseFormat = "json_object"
-	Text       CreateCompletionJSONBodyResponseFormat = "text"
+	JsonObject CreateCompletionJSONBodyResponseFormatType = "json_object"
+	JsonSchema CreateCompletionJSONBodyResponseFormatType = "json_schema"
+	Text       CreateCompletionJSONBodyResponseFormatType = "text"
 )
 
 // Defines values for CreateEmbeddingJSONBodyInputType.
@@ -750,7 +751,23 @@ type CreateCompletionJSONBody struct {
 	ModelId string `json:"model_id"`
 
 	// ResponseFormat The format of the response.
-	ResponseFormat *CreateCompletionJSONBodyResponseFormat `json:"response_format,omitempty"`
+	ResponseFormat *struct {
+		// JsonSchema The JSON schema when type is json_schema.
+		JsonSchema *struct {
+			// Description The description of the JSON schema.
+			Description string `json:"description"`
+
+			// Name The name of the JSON schema.
+			Name string `json:"name"`
+
+			// Schema The JSON schema.
+			Schema map[string]interface{} `json:"schema"`
+
+			// Strict Turn on/off strict mode.
+			Strict *bool `json:"strict,omitempty"`
+		} `json:"json_schema,omitempty"`
+		Type CreateCompletionJSONBodyResponseFormatType `json:"type"`
+	} `json:"response_format,omitempty"`
 
 	// StopSequences Custom text sequences that will cause the model to stop generating.
 	StopSequences *[]string `json:"stop_sequences,omitempty"`
@@ -761,8 +778,8 @@ type CreateCompletionJSONBody struct {
 	TraceId string `json:"trace_id"`
 }
 
-// CreateCompletionJSONBodyResponseFormat defines parameters for CreateCompletion.
-type CreateCompletionJSONBodyResponseFormat string
+// CreateCompletionJSONBodyResponseFormatType defines parameters for CreateCompletion.
+type CreateCompletionJSONBodyResponseFormatType string
 
 // ListCompletionModelsParams defines parameters for ListCompletionModels.
 type ListCompletionModelsParams struct {

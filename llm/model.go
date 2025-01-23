@@ -54,18 +54,30 @@ type ToolCall struct {
 
 // CompletionRequest represents the request body for the completion endpoint
 type CompletionRequest struct {
-	ModelID             string    `json:"model_id"`
-	Messages            []Message `json:"messages"`
-	Tools               []Tool    `json:"tools"`
-	StopSequences       []string  `json:"stop_sequences,omitempty"`
-	Temperature         *float32  `json:"temperature,omitempty"`
-	MaxTokens           *int32    `json:"max_tokens,omitempty"`
-	MaxCompletionTokens *int32    `json:"max_completion_tokens,omitempty"`
-	ResponseFormat      *string   `json:"response_format,omitempty"` // "text" or "json_object"
+	ModelID             string                    `json:"model_id"`
+	Messages            []Message                 `json:"messages"`
+	Tools               []Tool                    `json:"tools"`
+	StopSequences       []string                  `json:"stop_sequences,omitempty"`
+	Temperature         *float32                  `json:"temperature,omitempty"`
+	MaxTokens           *int32                    `json:"max_tokens,omitempty"`
+	MaxCompletionTokens *int32                    `json:"max_completion_tokens,omitempty"`
+	ResponseFormat      *CompletionResponseFormat `json:"response_format,omitempty"`
 }
 
 type CompletionResult struct {
 	Messages []Message `json:"messages"`
+}
+
+type CompletionResponseFormat struct {
+	Type       string                `json:"type"`                  // "text", "json_object", or "json_schema"
+	JsonSchema *CompletionJsonSchema `json:"json_schema,omitempty"` // Only used when type is "json_schema"
+}
+
+type CompletionJsonSchema struct {
+	Name        *string         `json:"name,omitempty"`
+	Description *string         `json:"description,omitempty"`
+	Schema      json.RawMessage `json:"schema,omitempty"`
+	Strict      *bool           `json:"strict,omitempty"`
 }
 
 type Tool struct {

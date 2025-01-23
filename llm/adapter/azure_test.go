@@ -7,7 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/samber/lo"
 	"gitlab.com/navyx/ai/maos/maos-core/llm"
 	"gitlab.com/navyx/ai/maos/maos-core/llm/adapter"
@@ -26,7 +25,7 @@ func TestAzureOpenAIWithText(t *testing.T) {
 
 	req := llm.CompletionRequest{
 		ModelID:        "5a265146-4e05-4cd7-a0a9-9adda7bf7a38-azure-gpt4o",
-		ResponseFormat: to.Ptr("json_object"),
+		ResponseFormat: &llm.CompletionResponseFormat{Type: "json_object"},
 		Messages: []llm.Message{
 			{
 				Role: "system",

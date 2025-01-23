@@ -100,10 +100,22 @@ func (a *AzureAdapter) GetCompletion(ctx context.Context, request llm.Completion
 		body.Stop = request.StopSequences
 	}
 	if request.ResponseFormat != nil {
-		if *request.ResponseFormat == "json_object" {
+		if request.ResponseFormat.Type == "json_object" {
 			body.ResponseFormat = &azopenai.ChatCompletionsJSONResponseFormat{}
-		} else if *request.ResponseFormat == "text" {
+		} else if request.ResponseFormat.Type == "text" {
 			body.ResponseFormat = &azopenai.ChatCompletionsTextResponseFormat{}
+		} else if request.ResponseFormat.Type == "json_schema" && request.ResponseFormat.JsonSchema != nil {
+			body.ResponseFormat = &azopenai.ChatCompletionsJSONSchemaResponseFormat{
+				JSONSchema: &azopenai.ChatCompletionsJSONSchemaResponseFormatJSONSchema{
+					Name:        request.ResponseFormat.JsonSchema.Name,
+					Description: request.ResponseFormat.JsonSchema.Description,
+					Schema:      request.ResponseFormat.JsonSchema.Schema,
+					Strict:      request.ResponseFormat.JsonSchema.Strict,
+				},
+			}
+		} else {
+			slog.Error("AzureAdapter invalid response format", "format", request.ResponseFormat.Type, "json_schema", request.ResponseFormat.JsonSchema)
+			return llm.CompletionResult{}, fmt.Errorf("invalid response format: %s, json_schema: %v", request.ResponseFormat.Type, request.ResponseFormat.JsonSchema)
 		}
 	}
 	for _, msg := range request.Messages {
